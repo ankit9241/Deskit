@@ -1,0 +1,54 @@
+# Node & Frontend dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+dist-ssr/
+build/
+
+# Rust / Tauri build artifacts
+src-tauri/target/
+target/
+**/*.rs.bk
+*.old
+
+# Local machine-specific Cargo configurations
+.cargo/
+src-tauri/.cargo/
+
+# Windows SDK local extraction directories & installers
+winsdk/
+winsdk_layout/
+*.cab
+*.msi
+
+# Local databases & persistent data
+*.db
+*.db-shm
+*.db-wal
+.pinned_data/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# OS and Editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/

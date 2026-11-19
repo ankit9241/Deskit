@@ -1,8 +1,8 @@
-# PINNED
+# DESKIT
 
 > **Your workspace. Always within reach.**
 
-PINNED is a distributable Windows desktop productivity application engineered for Windows 10 and Windows 11. It provides a central manager application and independent native floating desktop widgets that remain visible above standard windows.
+DESKIT is a distributable Windows desktop productivity application engineered for Windows 10 and Windows 11. It provides a central manager application and independent native floating desktop widgets that remain visible above standard windows.
 
 ---
 
@@ -54,7 +54,7 @@ powershell -ExecutionPolicy Bypass -File scripts\cargo_build.ps1
 ```
 
 The compiled binary will be located at:
-`src-tauri\target\x86_64-pc-windows-msvc\debug\pinned.exe`
+`src-tauri\target\x86_64-pc-windows-msvc\debug\deskit.exe`
 
 ---
 

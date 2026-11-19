@@ -1,12 +1,12 @@
 use std::sync::Mutex;
 use rusqlite::Connection;
 
-use pinned_lib::models::{
+use deskit_lib::models::{
     AppSettings, DailyGoal, Deadline, FocusSession, Note, Task, VisibilityMode, WidgetInstance,
     WidgetType,
 };
-use pinned_lib::persistence::migrations::run_migrations;
-use pinned_lib::persistence::Repositories;
+use deskit_lib::persistence::migrations::run_migrations;
+use deskit_lib::persistence::Repositories;
 
 fn setup_in_memory_db() -> Mutex<Connection> {
     let mut conn = Connection::open_in_memory().expect("failed to open in-memory db");
@@ -106,7 +106,7 @@ fn test_note_crud() {
     let note = Note {
         id: "note-1".to_string(),
         title: "Draft Ideas".to_string(),
-        content: "Build PINNED desktop widget architecture.".to_string(),
+        content: "Build DESKIT desktop widget architecture.".to_string(),
         created_at: "2026-11-18T12:00:00Z".to_string(),
         updated_at: "2026-11-18T12:00:00Z".to_string(),
     };
@@ -115,7 +115,7 @@ fn test_note_crud() {
 
     let all_notes = Repositories::get_all_notes(&db).expect("get all notes");
     assert_eq!(all_notes.len(), 1);
-    assert_eq!(all_notes[0].content, "Build PINNED desktop widget architecture.");
+    assert_eq!(all_notes[0].content, "Build DESKIT desktop widget architecture.");
 
     Repositories::delete_note(&db, "note-1").expect("delete note");
     let after_delete = Repositories::get_all_notes(&db).expect("get all notes");

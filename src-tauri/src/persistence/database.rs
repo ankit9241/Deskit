@@ -29,26 +29,26 @@ pub fn get_db_path(app: &AppHandle) -> Result<PathBuf, Box<dyn std::error::Error
     // 1. Try local app data directory
     if let Ok(dir) = app.path().app_local_data_dir() {
         if std::fs::create_dir_all(&dir).is_ok() {
-            return Ok(dir.join("pinned.db"));
+            return Ok(dir.join("deskit.db"));
         }
     }
 
     // 2. Try roaming app data directory
     if let Ok(dir) = app.path().app_data_dir() {
         if std::fs::create_dir_all(&dir).is_ok() {
-            return Ok(dir.join("pinned.db"));
+            return Ok(dir.join("deskit.db"));
         }
     }
 
     // 3. Fallback to local workspace / exe directory
     let local_dir = std::env::current_dir()
         .unwrap_or_else(|_| PathBuf::from("."))
-        .join(".pinned_data");
+        .join(".deskit_data");
     let _ = std::fs::create_dir_all(&local_dir);
     if local_dir.exists() {
-        return Ok(local_dir.join("pinned.db"));
+        return Ok(local_dir.join("deskit.db"));
     }
 
     // 4. Working directory fallback
-    Ok(PathBuf::from("pinned.db"))
+    Ok(PathBuf::from("deskit.db"))
 }

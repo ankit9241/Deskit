@@ -16,7 +16,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl overflow-hidden select-none">
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-800/40">
-          <h2 className="text-sm font-bold text-white tracking-wide">PINNED Preferences</h2>
+          <h2 className="text-sm font-bold text-white tracking-wide">DESKIT Preferences</h2>
           <button
             onClick={onClose}
             className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-700/60 transition-colors"
@@ -31,7 +31,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             <div>
               <div className="font-semibold text-slate-200">Launch at Windows Login</div>
               <div className="text-[11px] text-slate-400 mt-0.5">
-                Automatically launch PINNED and restore your pinned widgets upon user login.
+                Automatically launch DESKIT and restore your pinned widgets upon user login.
               </div>
             </div>
             <button

@@ -1,7 +1,7 @@
 import React from 'react';
 import { isTauri } from '@/services/tauriApi';
 import {
-  PinnedLogo,
+  DeskitLogo,
   MyWidgetsNavIcon,
   LibraryNavIcon,
   WorkspacesNavIcon,
@@ -49,10 +49,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, pinned
       <div>
         {/* Brand identity */}
         <div data-tauri-drag-region className="flex items-center gap-2.5 px-2 py-3 mb-4 cursor-move">
-          <PinnedLogo size={20} className="text-[#C5B89D]" />
+          <DeskitLogo size={20} className="text-[#C5B89D]" />
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-semibold tracking-tight text-[#F1EFE8]">PINNED</span>
+              <span className="text-xs font-semibold tracking-tight text-[#F1EFE8]">DESKIT</span>
               <span className="text-[9px] px-1.5 py-0.2 rounded bg-white/[0.05] text-[#858178] font-mono">
                 v1.0
               </span>
@@ -105,7 +105,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, pinned
         <div className="flex items-center gap-1.5">
           <span className={`w-1.5 h-1.5 rounded-full ${isTauri() ? 'bg-[#9DAE9B]' : 'bg-[#C9A77D]'}`} />
           <span className="truncate">
-            {isTauri() ? 'Native Win32 Layer Active' : 'Web Preview (Run pinned.exe for Native Layer)'}
+            {isTauri() ? 'Native Win32 Layer Active' : 'Web Preview (Run deskit.exe for Native Layer)'}
           </span>
         </div>
       </div>

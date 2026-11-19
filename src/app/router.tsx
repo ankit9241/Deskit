@@ -80,18 +80,18 @@ export const Router: React.FC = () => {
     let type = (searchParams.get('type') || searchParams.get('widget_type') || searchParams.get('widgetType')) as WidgetType | null;
 
     // 2. Global injection script (Native Tauri)
-    const globalPinned = (window as any).__PINNED_WIDGET__;
-    if ((!id || !type) && globalPinned) {
-      id = id || globalPinned.id;
-      type = type || (globalPinned.type as WidgetType);
+    const globalWidget = (window as any).__DESKIT_WIDGET__;
+    if ((!id || !type) && globalWidget) {
+      id = id || globalWidget.id;
+      type = type || (globalWidget.type as WidgetType);
     }
 
     // 3. SessionStorage persistence
     if (!id) {
-      try { id = sessionStorage.getItem('PINNED_WIDGET_ID'); } catch {}
+      try { id = sessionStorage.getItem('DESKIT_WIDGET_ID'); } catch {}
     }
     if (!type) {
-      try { type = sessionStorage.getItem('PINNED_WIDGET_TYPE') as WidgetType | null; } catch {}
+      try { type = sessionStorage.getItem('DESKIT_WIDGET_TYPE') as WidgetType | null; } catch {}
     }
 
     // 4. Tauri window label inspection
@@ -111,7 +111,7 @@ export const Router: React.FC = () => {
     // 5. LocalStorage lookup if id is known but type was omitted
     if (id && !type) {
       try {
-        const raw = localStorage.getItem('pinned_widgets');
+        const raw = localStorage.getItem('deskit_widgets');
         if (raw) {
           const list = JSON.parse(raw);
           if (Array.isArray(list)) {
@@ -124,12 +124,12 @@ export const Router: React.FC = () => {
       } catch {}
     }
 
-    // 6. Last pinned widget in sessionStorage
+    // 6. Last active widget in sessionStorage
     if (!type && id) {
       try {
-        const lastPinned = sessionStorage.getItem('last_pinned_widget');
-        if (lastPinned) {
-          const parsed = JSON.parse(lastPinned);
+        const lastWidget = sessionStorage.getItem('last_deskit_widget');
+        if (lastWidget) {
+          const parsed = JSON.parse(lastWidget);
           if (parsed && parsed.widget_type) type = parsed.widget_type as WidgetType;
         }
       } catch {}
@@ -154,8 +154,8 @@ export const Router: React.FC = () => {
 
     if (id && type) {
       try {
-        sessionStorage.setItem('PINNED_WIDGET_ID', id);
-        sessionStorage.setItem('PINNED_WIDGET_TYPE', type);
+        sessionStorage.setItem('DESKIT_WIDGET_ID', id);
+        sessionStorage.setItem('DESKIT_WIDGET_TYPE', type);
       } catch {}
       return { widgetId: id, widgetType: type };
     }
@@ -217,8 +217,14 @@ export const Router: React.FC = () => {
           return 'Deadlines';
         case 'goals':
           return 'Daily Goals';
+        default:
+          return 'Widget';
       }
     };
+
+    useEffect(() => {
+      document.title = `DESKIT — ${getWidgetTitle()}`;
+    }, [widgetType]);
 
     return (
       <WidgetErrorBoundary>

@@ -22,7 +22,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange, pinnedCo
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-sm font-bold tracking-tight text-[#F5F5F7]">PINNED</h1>
+            <h1 className="text-sm font-bold tracking-tight text-[#F5F5F7]">DESKIT</h1>
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/[0.06] text-[#8B9CF6] font-mono">
               v0.2.0
             </span>

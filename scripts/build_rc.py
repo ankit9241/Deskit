@@ -70,7 +70,7 @@ void mainCRTStartup() {
 
     if (out_file) {
         wchar_t cmd[1024];
-        my_wcscpy(cmd, L"\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Tools\\MSVC\\14.29.30133\\bin\\Hostx64\\x64\\lib.exe\" /NOLOGO /MACHINE:X64 /DEF:\"C:\\Users\\ankit\\Desktop\\pinned\\winsdk\\lib_x64\\uuid.def\" /OUT:\"");
+        my_wcscpy(cmd, L"\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Tools\\MSVC\\14.29.30133\\bin\\Hostx64\\x64\\lib.exe\" /NOLOGO /MACHINE:X64 /DEF:\"winsdk\\lib_x64\\uuid.def\" /OUT:\"");
         my_wcscat(cmd, out_file);
         my_wcscat(cmd, L"\"");
 

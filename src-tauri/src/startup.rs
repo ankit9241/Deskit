@@ -5,7 +5,7 @@ use tauri::{
 };
 
 pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
-    let show_item = MenuItem::with_id(app, "show", "Open PINNED", true, None::<&str>)?;
+    let show_item = MenuItem::with_id(app, "show", "Open DESKIT", true, None::<&str>)?;
     let hide_item = MenuItem::with_id(app, "hide", "Hide All", true, None::<&str>)?;
     let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
 

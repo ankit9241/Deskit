@@ -1,7 +1,8 @@
 $msvcBin = 'C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.29.30133\bin\Hostx64\x64'
 $msvcLib = 'C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.29.30133\lib\x64'
-$winSdkLib = 'C:\Users\ankit\Desktop\pinned\winsdk\lib_x64'
-$winSdkBin = 'C:\Users\ankit\Desktop\pinned\winsdk\bin'
+$projectRoot = Split-Path -Parent $PSScriptRoot
+$winSdkLib = "$projectRoot\winsdk\lib_x64"
+$winSdkBin = "$projectRoot\winsdk\bin"
 $rustBin = 'C:\Users\ankit\.rustup\toolchains\stable-x86_64-pc-windows-msvc\bin'
 
 $env:PATH = "$winSdkBin;$msvcBin;$rustBin;$env:PATH"
@@ -14,11 +15,11 @@ $env:RC_x86_64_pc_windows_msvc = "$winSdkBin\rc.exe"
 $env:CC = "$msvcBin\cl.exe"
 $env:CXX = "$msvcBin\cl.exe"
 
-# Terminate any previously running pinned.exe process
-Get-Process pinned -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+# Terminate any previously running deskit.exe process
+Get-Process deskit -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 
-# Ensure binary target file is unlocked before cargo runs
-$targetExe = "$PSScriptRoot\..\src-tauri\target\x86_64-pc-windows-msvc\debug\pinned.exe"
+# Ensure binary target files are unlocked before cargo runs
+$targetExe = "$PSScriptRoot\..\src-tauri\target\x86_64-pc-windows-msvc\debug\deskit.exe"
 if (Test-Path $targetExe) {
     try {
         $fs = [System.IO.File]::Open($targetExe, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite)
@@ -36,10 +37,15 @@ if (-not (Test-Path $manifestSource)) {
     $manifestSource = "$PSScriptRoot\..\winsdk\app_manifest.xml"
 }
 if (Test-Path $manifestSource) {
-    $dir1 = "$PSScriptRoot\..\src-tauri\target\x86_64-pc-windows-msvc\debug"
-    if (Test-Path $dir1) { Copy-Item $manifestSource "$dir1\pinned.exe.manifest" -Force }
-    $dir2 = "$PSScriptRoot\..\src-tauri\target\debug"
-    if (Test-Path $dir2) { Copy-Item $manifestSource "$dir2\pinned.exe.manifest" -Force }
+    $dirs = @(
+        "$PSScriptRoot\..\src-tauri\target\x86_64-pc-windows-msvc\debug",
+        "$PSScriptRoot\..\src-tauri\target\debug"
+    )
+    foreach ($dir in $dirs) {
+        if (Test-Path $dir) {
+            Copy-Item $manifestSource "$dir\deskit.exe.manifest" -Force
+        }
+    }
 }
 
 Set-Location "$PSScriptRoot\.."

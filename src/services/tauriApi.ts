@@ -125,7 +125,7 @@ export async function getWidgets(): Promise<WidgetInstance[]> {
   if (isTauri()) {
     return await safeInvoke<WidgetInstance[]>('get_widgets');
   }
-  return getStorage<WidgetInstance[]>('pinned_widgets', []);
+  return getStorage<WidgetInstance[]>('deskit_widgets', []);
 }
 
 export async function pinWidget(widgetType: string, title?: string): Promise<WidgetInstance> {
@@ -138,7 +138,7 @@ export async function pinWidget(widgetType: string, title?: string): Promise<Wid
   }
 
   // Browser Fallback: Persist in localStorage and open an independent popup window
-  const widgets = getStorage<WidgetInstance[]>('pinned_widgets', []);
+  const widgets = getStorage<WidgetInstance[]>('deskit_widgets', []);
   const existing = widgets.find((w) => w.widget_type === widgetType && w.is_pinned);
 
   const getDefaultDims = (type: string): [number, number] => {
@@ -184,13 +184,13 @@ export async function pinWidget(widgetType: string, title?: string): Promise<Wid
       updated_at: now,
     };
     widgets.push(instance);
-    setStorage('pinned_widgets', widgets);
+    setStorage('deskit_widgets', widgets);
   }
 
   // Open independent popup window in browser
   try {
     const popupUrl = `/?widget_id=${encodeURIComponent(instance.id)}&type=${encodeURIComponent(instance.widget_type)}&t=${Date.now()}`;
-    sessionStorage.setItem('last_pinned_widget', JSON.stringify(instance));
+    sessionStorage.setItem('last_deskit_widget', JSON.stringify(instance));
     const windowName = `widget_${instance.widget_type}_${instance.id.replace(/-/g, '_')}`;
     const features = `width=${width},height=${height},left=${instance.x},top=${instance.y},menubar=no,status=no,toolbar=no,location=no,resizable=yes`;
     window.open(popupUrl, windowName, features);
@@ -206,9 +206,9 @@ export async function unpinWidget(widgetId: string): Promise<void> {
   if (isTauri()) {
     await safeInvoke('unpin_widget', { widgetId, widget_id: widgetId });
   } else {
-    const widgets = getStorage<WidgetInstance[]>('pinned_widgets', []);
+    const widgets = getStorage<WidgetInstance[]>('deskit_widgets', []);
     const updated = widgets.map((w) => (w.id === widgetId ? { ...w, is_pinned: false } : w));
-    setStorage('pinned_widgets', updated);
+    setStorage('deskit_widgets', updated);
     emitLocalEvent('widget-updated', widgetId);
   }
 }
@@ -217,9 +217,9 @@ export async function removeWidget(widgetId: string): Promise<void> {
   if (isTauri()) {
     await safeInvoke('remove_widget', { widgetId, widget_id: widgetId });
   } else {
-    const widgets = getStorage<WidgetInstance[]>('pinned_widgets', []);
+    const widgets = getStorage<WidgetInstance[]>('deskit_widgets', []);
     const updated = widgets.filter((w) => w.id !== widgetId);
-    setStorage('pinned_widgets', updated);
+    setStorage('deskit_widgets', updated);
     emitLocalEvent('widget-removed', widgetId);
   }
 }
@@ -233,9 +233,9 @@ export async function setWidgetVisibility(widgetId: string, visibilityMode: Visi
       visibility_mode: visibilityMode,
     });
   } else {
-    const widgets = getStorage<WidgetInstance[]>('pinned_widgets', []);
+    const widgets = getStorage<WidgetInstance[]>('deskit_widgets', []);
     const updated = widgets.map((w) => (w.id === widgetId ? { ...w, visibility_mode: visibilityMode } : w));
-    setStorage('pinned_widgets', updated);
+    setStorage('deskit_widgets', updated);
     emitLocalEvent('widget-updated', widgetId);
   }
 }
@@ -249,9 +249,9 @@ export async function toggleCollapseWidget(widgetId: string, isCollapsed: boolea
       is_collapsed: isCollapsed,
     });
   } else {
-    const widgets = getStorage<WidgetInstance[]>('pinned_widgets', []);
+    const widgets = getStorage<WidgetInstance[]>('deskit_widgets', []);
     const updated = widgets.map((w) => (w.id === widgetId ? { ...w, is_collapsed: isCollapsed } : w));
-    setStorage('pinned_widgets', updated);
+    setStorage('deskit_widgets', updated);
     emitLocalEvent('widget-updated', widgetId);
   }
 }
@@ -261,14 +261,14 @@ export async function getTasks(): Promise<Task[]> {
   if (isTauri()) {
     return await safeInvoke<Task[]>('get_tasks');
   }
-  return getStorage<Task[]>('pinned_tasks', []);
+  return getStorage<Task[]>('deskit_tasks', []);
 }
 
 export async function saveTask(task: Partial<Task> & { title: string }): Promise<Task> {
   if (isTauri()) {
     return await safeInvoke<Task>('save_task', { task });
   }
-  const tasks = getStorage<Task[]>('pinned_tasks', []);
+  const tasks = getStorage<Task[]>('deskit_tasks', []);
   const now = new Date().toISOString();
   let saved: Task;
   if (task.id) {
@@ -289,7 +289,7 @@ export async function saveTask(task: Partial<Task> & { title: string }): Promise
     };
     tasks.push(saved);
   }
-  setStorage('pinned_tasks', tasks);
+  setStorage('deskit_tasks', tasks);
   emitLocalEvent('tasks-updated', saved);
   return saved;
 }
@@ -298,8 +298,9 @@ export async function deleteTask(id: string): Promise<void> {
   if (isTauri()) {
     await safeInvoke('delete_task', { id });
   } else {
-    const tasks = getStorage<Task[]>('pinned_tasks', []);
-    setStorage('pinned_tasks', tasks.filter((t) => t.id !== id));
+    const tasks = getStorage<Task[]>('deskit_tasks', []);
+    const filtered = tasks.filter((t) => t.id !== id);
+    setStorage('deskit_tasks', filtered);
     emitLocalEvent('tasks-updated', id);
   }
 }
@@ -309,14 +310,14 @@ export async function getNotes(): Promise<Note[]> {
   if (isTauri()) {
     return await safeInvoke<Note[]>('get_notes');
   }
-  return getStorage<Note[]>('pinned_notes', []);
+  return getStorage<Note[]>('deskit_notes', []);
 }
 
 export async function saveNote(note: Partial<Note> & { title: string; content: string }): Promise<Note> {
   if (isTauri()) {
     return await safeInvoke<Note>('save_note', { note });
   }
-  const notes = getStorage<Note[]>('pinned_notes', []);
+  const notes = getStorage<Note[]>('deskit_notes', []);
   const now = new Date().toISOString();
   let saved: Note;
   if (note.id) {
@@ -334,7 +335,7 @@ export async function saveNote(note: Partial<Note> & { title: string; content: s
     };
     notes.push(saved);
   }
-  setStorage('pinned_notes', notes);
+  setStorage('deskit_notes', notes);
   emitLocalEvent('notes-updated', saved);
   return saved;
 }
@@ -343,8 +344,9 @@ export async function deleteNote(id: string): Promise<void> {
   if (isTauri()) {
     await safeInvoke('delete_note', { id });
   } else {
-    const notes = getStorage<Note[]>('pinned_notes', []);
-    setStorage('pinned_notes', notes.filter((n) => n.id !== id));
+    const notes = getStorage<Note[]>('deskit_notes', []);
+    const filtered = notes.filter((n) => n.id !== id);
+    setStorage('deskit_notes', filtered);
     emitLocalEvent('notes-updated', id);
   }
 }
@@ -354,7 +356,7 @@ export async function getFocusSession(): Promise<FocusSession> {
   if (isTauri()) {
     return await safeInvoke<FocusSession>('get_focus_session');
   }
-  return getStorage<FocusSession>('pinned_focus', DEFAULT_FOCUS);
+  return getStorage<FocusSession>('deskit_focus', DEFAULT_FOCUS);
 }
 
 export async function saveFocusSession(session: FocusSession): Promise<FocusSession> {
@@ -362,7 +364,7 @@ export async function saveFocusSession(session: FocusSession): Promise<FocusSess
     return await safeInvoke<FocusSession>('save_focus_session', { session });
   }
   const updated = { ...session, updated_at: new Date().toISOString() };
-  setStorage('pinned_focus', updated);
+  setStorage('deskit_focus', updated);
   emitLocalEvent('focus-updated', updated);
   return updated;
 }
@@ -372,14 +374,14 @@ export async function getDeadlines(): Promise<Deadline[]> {
   if (isTauri()) {
     return await safeInvoke<Deadline[]>('get_deadlines');
   }
-  return getStorage<Deadline[]>('pinned_deadlines', []);
+  return getStorage<Deadline[]>('deskit_deadlines', []);
 }
 
 export async function saveDeadline(deadline: Partial<Deadline> & { title: string; due_date: string }): Promise<Deadline> {
   if (isTauri()) {
     return await safeInvoke<Deadline>('save_deadline', { deadline });
   }
-  const deadlines = getStorage<Deadline[]>('pinned_deadlines', []);
+  const deadlines = getStorage<Deadline[]>('deskit_deadlines', []);
   const now = new Date().toISOString();
   let saved: Deadline;
   if (deadline.id) {
@@ -399,7 +401,7 @@ export async function saveDeadline(deadline: Partial<Deadline> & { title: string
     };
     deadlines.push(saved);
   }
-  setStorage('pinned_deadlines', deadlines);
+  setStorage('deskit_deadlines', deadlines);
   emitLocalEvent('deadlines-updated', saved);
   return saved;
 }
@@ -408,8 +410,9 @@ export async function deleteDeadline(id: string): Promise<void> {
   if (isTauri()) {
     await safeInvoke('delete_deadline', { id });
   } else {
-    const deadlines = getStorage<Deadline[]>('pinned_deadlines', []);
-    setStorage('pinned_deadlines', deadlines.filter((d) => d.id !== id));
+    const deadlines = getStorage<Deadline[]>('deskit_deadlines', []);
+    const filtered = deadlines.filter((d) => d.id !== id);
+    setStorage('deskit_deadlines', filtered);
     emitLocalEvent('deadlines-updated', id);
   }
 }
@@ -419,14 +422,14 @@ export async function getGoals(): Promise<DailyGoal[]> {
   if (isTauri()) {
     return await safeInvoke<DailyGoal[]>('get_goals');
   }
-  return getStorage<DailyGoal[]>('pinned_goals', []);
+  return getStorage<DailyGoal[]>('deskit_goals', []);
 }
 
 export async function saveGoal(goal: Partial<DailyGoal> & { title: string }): Promise<DailyGoal> {
   if (isTauri()) {
     return await safeInvoke<DailyGoal>('save_goal', { goal });
   }
-  const goals = getStorage<DailyGoal[]>('pinned_goals', []);
+  const goals = getStorage<DailyGoal[]>('deskit_goals', []);
   const now = new Date().toISOString();
   let saved: DailyGoal;
   if (goal.id) {
@@ -447,7 +450,7 @@ export async function saveGoal(goal: Partial<DailyGoal> & { title: string }): Pr
     };
     goals.push(saved);
   }
-  setStorage('pinned_goals', goals);
+  setStorage('deskit_goals', goals);
   emitLocalEvent('goals-updated', saved);
   return saved;
 }
@@ -456,8 +459,9 @@ export async function deleteGoal(id: string): Promise<void> {
   if (isTauri()) {
     await safeInvoke('delete_goal', { id });
   } else {
-    const goals = getStorage<DailyGoal[]>('pinned_goals', []);
-    setStorage('pinned_goals', goals.filter((g) => g.id !== id));
+    const goals = getStorage<DailyGoal[]>('deskit_goals', []);
+    const filtered = goals.filter((g) => g.id !== id);
+    setStorage('deskit_goals', filtered);
     emitLocalEvent('goals-updated', id);
   }
 }
@@ -467,7 +471,7 @@ export async function getSettings(): Promise<AppSettings> {
   if (isTauri()) {
     return await safeInvoke<AppSettings>('get_settings');
   }
-  return getStorage<AppSettings>('pinned_settings', DEFAULT_SETTINGS);
+  return getStorage<AppSettings>('deskit_settings', DEFAULT_SETTINGS);
 }
 
 export async function saveSettings(settings: AppSettings): Promise<AppSettings> {
@@ -475,7 +479,7 @@ export async function saveSettings(settings: AppSettings): Promise<AppSettings> 
     return await safeInvoke<AppSettings>('save_settings', { settings });
   }
   const updated = { ...settings, updated_at: new Date().toISOString() };
-  setStorage('pinned_settings', updated);
+  setStorage('deskit_settings', updated);
   emitLocalEvent('settings-updated', updated);
   return updated;
 }

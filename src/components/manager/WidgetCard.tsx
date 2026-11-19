@@ -51,7 +51,7 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({ metadata }) => {
           {isPinned ? (
             <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-500/30">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              PINNED
+              ACTIVE
             </span>
           ) : (
             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800/80 text-slate-400 border border-slate-700/50">

@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "PINNED",
+  "productName": "DESKIT",
   "version": "0.1.0",
-  "identifier": "com.pinned.desktop",
+  "identifier": "com.deskit.desktop",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -13,7 +13,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "PINNED — Manager",
+        "title": "DESKIT — Manager",
         "label": "main",
         "width": 960,
         "height": 680,

@@ -90,7 +90,7 @@ export const SettingsView: React.FC = () => {
                 </span>
               </div>
               <p className="text-[11px] text-[#858178]">
-                Starts PINNED automatically when you log in to Windows.
+                Starts DESKIT automatically when you log in to Windows.
               </p>
             </div>
             <button

@@ -1,4 +1,4 @@
-# PINNED — Windows 10 & 11 Native Integration
+# DESKIT — Windows 10 & 11 Native Integration
 
 > **Module:** `src-tauri/src/windows/native.rs`  
 > **Platform Target:** Windows 10 & 11 (64-bit)  
@@ -66,7 +66,7 @@ Tauri widget windows are created with native frameless attributes:
 - `decorations(false)`: Removes Windows title bar, system menu, and default borders.
 - `transparent(true)`: Enables transparent alpha composition for modern floating widget styling.
 - `shadow(false)`: Eliminates default thick drop shadows that clash with custom widget cards.
-- `skip_taskbar(true)`: Pinned widget windows do not clutter the Windows Taskbar with individual icons; management occurs through the PINNED Manager and System Tray.
+- `skip_taskbar(true)`: Pinned widget windows do not clutter the Windows Taskbar with individual icons; management occurs through the DESKIT Manager and System Tray.
 
 ### Explicit Drag Region (`data-tauri-drag-region`)
 
@@ -89,11 +89,11 @@ To prevent entire interactive components (input fields, buttons, scrollbars, che
 ## 5. System Tray & Windows Autostart
 
 - **Tray Integration (`src-tauri/src/startup.rs`):**
-  - Left click on tray icon restores/focuses the PINNED Manager window.
-  - Right click displays native context menu with options: *Open PINNED*, *Hide All*, *Quit*.
+  - Left click on tray icon restores/focuses the DESKIT Manager window.
+  - Right click displays native context menu with options: *Open DESKIT*, *Hide All*, *Quit*.
   - When *Close to Tray* is enabled, clicking the Manager's `X` button hides the window rather than terminating the application process.
 
 - **Autostart Integration (`tauri-plugin-autostart`):**
   - Configures the Windows Run registry key (`HKCU\Software\Microsoft\Windows\CurrentVersion\Run`).
   - Enabled conditionally based on user preference (`launch_at_login`).
-  - On login, PINNED launches and automatically reads previous pinned states from SQLite, restoring floating widgets exactly where the user placed them.
+  - On login, DESKIT launches and automatically reads previous pinned states from SQLite, restoring floating widgets exactly where the user placed them.

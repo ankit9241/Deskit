@@ -1,7 +1,7 @@
-# PINNED — Development & Build Guide
+# DESKIT — Development & Build Guide
 
-> **Project Name:** PINNED  
-> **Repository:** `pinned`  
+> **Project Name:** DESKIT  
+> **Repository:** `deskit`  
 > **Platform:** Windows 10 & 11 (64-bit)
 
 ---
@@ -18,7 +18,7 @@
 ## 2. Directory Structure
 
 ```
-pinned/
+deskit/
 │
 ├── src/
 │   ├── app/                    # Entry components & client router
@@ -82,7 +82,7 @@ Executes the comprehensive in-memory SQLite integration tests covering:
 powershell -ExecutionPolicy Bypass -File scripts\cargo_build.ps1
 ```
 Outputs the standalone Windows executable to:
-`src-tauri\target\x86_64-pc-windows-msvc\debug\pinned.exe`
+`src-tauri\target\x86_64-pc-windows-msvc\debug\deskit.exe`
 
 ---
 
@@ -90,7 +90,7 @@ Outputs the standalone Windows executable to:
 
 To launch the native Windows binary:
 ```powershell
-.\src-tauri\target\x86_64-pc-windows-msvc\debug\pinned.exe
+.\src-tauri\target\x86_64-pc-windows-msvc\debug\deskit.exe
 ```
 
 - Click **Pin** on any widget (Clock, Tasks, Focus, Notes, Deadlines, Goals) in the Manager window.

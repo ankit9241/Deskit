@@ -15,7 +15,7 @@ export async function onEvent<T>(eventName: string, handler: EventHandler<T>): P
   let channel: BroadcastChannel | null = null;
   if (typeof BroadcastChannel !== 'undefined') {
     try {
-      channel = new BroadcastChannel('pinned_events');
+      channel = new BroadcastChannel('deskit_events');
       bcListener = (e: MessageEvent) => {
         if (e.data && e.data.event === eventName) {
           handler(e.data.payload);
@@ -63,7 +63,7 @@ export function emitLocalEvent<T>(eventName: string, payload: T): void {
   // Broadcast to other tabs / popup widget windows
   if (typeof BroadcastChannel !== 'undefined') {
     try {
-      const channel = new BroadcastChannel('pinned_events');
+      const channel = new BroadcastChannel('deskit_events');
       channel.postMessage({ event: eventName, payload });
       channel.close();
     } catch {}

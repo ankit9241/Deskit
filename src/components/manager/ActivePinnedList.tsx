@@ -3,16 +3,16 @@ import { useWidgetStore } from '@/stores/widgetStore';
 import { VisibilityMode } from '@/types/widget';
 import { Trash2 } from 'lucide-react';
 
-export const ActivePinnedList: React.FC = () => {
+export const ActiveWidgetsList: React.FC = () => {
   const { widgets, unpinWidget, removeWidget, setVisibilityMode } = useWidgetStore();
 
-  const pinnedWidgets = widgets.filter((w) => w.is_pinned);
+  const activeWidgets = widgets.filter((w) => w.is_pinned);
 
-  if (pinnedWidgets.length === 0) {
+  if (activeWidgets.length === 0) {
     return (
       <div className="p-6 rounded-xl bg-slate-900/40 border border-slate-800 text-center">
         <p className="text-xs text-slate-500 font-medium">
-          No active floating widgets on your desktop. Pin one from the library above!
+          No active floating widgets on your desktop. Launch one from the library above!
         </p>
       </div>
     );
@@ -20,7 +20,7 @@ export const ActivePinnedList: React.FC = () => {
 
   return (
     <div className="space-y-2">
-      {pinnedWidgets.map((widget) => {
+      {activeWidgets.map((widget) => {
         return (
           <div
             key={widget.id}

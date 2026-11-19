@@ -120,7 +120,7 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
       {!api.isTauri() && (
         <div className="bg-[#C5B89D]/15 border-b border-[#C5B89D]/20 px-2 py-0.5 text-[9px] text-[#C5B89D] flex items-center justify-between shrink-0 z-40">
           <span>Browser Preview</span>
-          <span className="text-[#858178]">Launch pinned.exe for Native Always-on-Top</span>
+          <span className="text-[#858178]">Launch deskit.exe for Native Always-on-Top</span>
         </div>
       )}
       {/* Contextual Floating Header Pill - Revealed on hover */}

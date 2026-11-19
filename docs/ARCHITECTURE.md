@@ -1,6 +1,6 @@
-# PINNED — Phase 1 Architecture Specification
+# DESKIT — Phase 1 Architecture Specification
 
-> **Product Name:** PINNED  
+> **Product Name:** DESKIT  
 > **Tagline:** Your workspace. Always within reach.  
 > **Target Platform:** Windows 10 & Windows 11 (64-bit)
 
@@ -8,9 +8,9 @@
 
 ## 1. High-Level System Overview
 
-PINNED is a native Windows desktop productivity application engineered with **Tauri 2**, **Rust stable**, **React 19**, **TypeScript**, and **SQLite**.
+DESKIT is a native Windows desktop productivity application engineered with **Tauri 2**, **Rust stable**, **React 19**, **TypeScript**, and **SQLite**.
 
-Unlike browser dashboards or single-window web simulators that render widgets as in-page DOM elements, PINNED implements a **true multi-window native desktop architecture**:
+Unlike browser dashboards or single-window web simulators that render widgets as in-page DOM elements, DESKIT implements a **true multi-window native desktop architecture**:
 
 1. **Main Manager Window (`main`):**
    - The central configuration and widget library cockpit.
@@ -24,7 +24,7 @@ Unlike browser dashboards or single-window web simulators that render widgets as
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                        PINNED Manager Window                           │
+│                        DESKIT Manager Window                           │
 │  - Widget Catalog (Clock, Tasks, Focus, Notes, Deadlines, Goals)      │
 │  - Pinned Status & Geometry Management                                 │
 │  - Application Preferences & Win32 Startup Settings                    │
@@ -100,7 +100,7 @@ unsafe {
 
 The persistent source of truth is SQLite, interfaced via `rusqlite` linked against Windows' native `winsqlite3.dll`:
 
-- **Database Location:** `%APPDATA%\com.pinned.desktop\pinned.db`.
+- **Database Location:** `%APPDATA%\com.deskit.desktop\deskit.db`.
 - **Migrations (`migrations.rs`):** Schema versioning via `user_version` PRAGMA with idempotent migration scripts.
 - **Relational Tables:**
   - `widget_instances`: ID, widget type, title, coordinates (`x`, `y`), dimensions (`width`, `height`), `is_pinned`, `visibility_mode`, `is_collapsed`, `config_json`, timestamps.

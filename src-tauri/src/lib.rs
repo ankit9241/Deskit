@@ -104,5 +104,5 @@ pub fn run() {
             save_settings,
         ])
         .run(tauri::generate_context!())
-        .expect("error while running pinned desktop application");
+        .expect("error while running DESKIT desktop application");
 }

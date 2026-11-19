@@ -1,7 +1,8 @@
 $msvcBin = 'C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.29.30133\bin\Hostx64\x64'
 $msvcLib = 'C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.29.30133\lib\x64'
-$winSdkLib = 'C:\Users\ankit\Desktop\pinned\winsdk\lib_x64'
-$winSdkBin = 'C:\Users\ankit\Desktop\pinned\winsdk\bin'
+$projectRoot = Split-Path -Parent $PSScriptRoot
+$winSdkLib = "$projectRoot\winsdk\lib_x64"
+$winSdkBin = "$projectRoot\winsdk\bin"
 $rustBin = 'C:\Users\ankit\.rustup\toolchains\stable-x86_64-pc-windows-msvc\bin'
 
 $env:PATH = "$winSdkBin;$msvcBin;$rustBin;$env:PATH"

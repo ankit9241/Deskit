@@ -24,7 +24,7 @@ interface CustomWorkspace {
   widgets: { type: WidgetType; title: string }[];
 }
 
-const STORAGE_KEY = 'pinned_custom_workspaces';
+const STORAGE_KEY = 'deskit_custom_workspaces';
 
 export const WorkspacesView: React.FC = () => {
   const { widgets, pinWidget } = useWidgetStore();

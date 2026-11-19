@@ -26,7 +26,7 @@ impl WindowFactory {
         let (max_w, max_h) = widget.widget_type.max_dimensions();
 
         let init_script = format!(
-            "window.__PINNED_WIDGET__ = {{ id: '{}', type: '{}' }};",
+            "window.__DESKIT_WIDGET__ = {{ id: '{}', type: '{}' }};",
             widget.id,
             widget.widget_type.as_str()
         );

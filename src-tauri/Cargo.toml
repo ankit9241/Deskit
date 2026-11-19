@@ -1,12 +1,12 @@
 [package]
-name = "pinned"
+name = "deskit"
 version = "0.1.0"
-description = "PINNED - Your workspace. Always within reach."
-authors = ["PINNED Authors"]
+description = "DESKIT - Your workspace. Always within reach."
+authors = ["DESKIT Authors"]
 edition = "2021"
 
 [lib]
-name = "pinned_lib"
+name = "deskit_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

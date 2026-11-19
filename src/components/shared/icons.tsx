@@ -7,8 +7,8 @@ interface IconProps {
   strokeWidth?: number;
 }
 
-// 1. PINNED Application Identity: Precision pin crossed with an orbital focal ring
-export const PinnedLogo: React.FC<IconProps> = ({ size = 20, className = '', strokeWidth = 1.75 }) => (
+// 1. DESKIT Application Identity: Precision focal desk layer symbol
+export const DeskitLogo: React.FC<IconProps> = ({ size = 20, className = '', strokeWidth = 1.75 }) => (
   <svg
     width={size}
     height={size}

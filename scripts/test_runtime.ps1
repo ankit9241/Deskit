@@ -1,4 +1,4 @@
-$exe = Resolve-Path "$PSScriptRoot\..\src-tauri\target\x86_64-pc-windows-msvc\debug\pinned.exe"
+$exe = Resolve-Path "$PSScriptRoot\..\src-tauri\target\x86_64-pc-windows-msvc\debug\deskit.exe"
 $proc = Start-Process -FilePath $exe -PassThru
 Start-Sleep -Seconds 3
 $isRunning = !$proc.HasExited

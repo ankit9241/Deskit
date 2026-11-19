@@ -28,7 +28,7 @@ winsdk_layout/
 *.db
 *.db-shm
 *.db-wal
-.pinned_data/
+.deskit_data/
 
 # Logs
 logs/

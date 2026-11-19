@@ -22,7 +22,7 @@ export interface AppearanceState {
   applyCssVariables: () => void;
 }
 
-const STORAGE_KEY = 'pinned_appearance_preferences';
+const STORAGE_KEY = 'deskit_appearance_preferences';
 
 function getInitialState() {
   const fallback = {
@@ -91,7 +91,7 @@ export const useAppearanceStore = create<AppearanceState>((set, get) => {
           collapseDelaySeconds: merged.collapseDelaySeconds,
         })
       );
-      window.dispatchEvent(new Event('pinned_appearance_updated'));
+      window.dispatchEvent(new Event('deskit_appearance_updated'));
     } catch {
       // Ignore
     }
@@ -149,9 +149,10 @@ export const useAppearanceStore = create<AppearanceState>((set, get) => {
 // Auto-sync CSS variables on mount in any window
 if (typeof window !== 'undefined') {
   useAppearanceStore.getState().applyCssVariables();
-  window.addEventListener('pinned_appearance_updated', () => {
+  const syncAppearance = () => {
     const updated = getInitialState();
     useAppearanceStore.setState(updated);
     useAppearanceStore.getState().applyCssVariables();
-  });
+  };
+  window.addEventListener('deskit_appearance_updated', syncAppearance);
 }

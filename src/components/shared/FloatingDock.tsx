@@ -7,7 +7,7 @@ import {
   AnimatePresence,
 } from 'framer-motion';
 import {
-  PinnedLogo,
+  DeskitLogo,
   ClockIcon,
   TasksIcon,
   FocusIcon,
@@ -101,11 +101,11 @@ export const FloatingDock: React.FC<FloatingDockProps> = ({
       onMouseLeave={() => mouseX.set(Infinity)}
       className="flex items-end gap-1.5 px-2.5 py-1.5 rounded-full bg-[#242421]/90 backdrop-blur-2xl border border-white/[0.08] shadow-capsule z-40"
     >
-      {/* PINNED Manager Toggle */}
+      {/* DESKIT Manager Toggle */}
       <DockItem
         mouseX={mouseX}
-        icon={<PinnedLogo size={16} />}
-        label="PINNED Manager"
+        icon={<DeskitLogo size={16} />}
+        label="DESKIT Manager"
         onClick={() => onOpenManager && onOpenManager()}
       />
 

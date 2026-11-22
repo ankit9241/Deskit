@@ -8,7 +8,7 @@ interface TaskState {
   isLoading: boolean;
   error: string | null;
   fetchTasks: () => Promise<void>;
-  addTask: (title: string, priority?: TaskPriority, dueDate?: string) => Promise<void>;
+  addTask: (title: string, priority?: TaskPriority, dueDate?: string, description?: string) => Promise<void>;
   toggleComplete: (id: string) => Promise<void>;
   updateTask: (task: Task) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
@@ -30,14 +30,16 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     }
   },
 
-  addTask: async (title, priority = 'medium', dueDate) => {
+  addTask: async (title, priority = 'medium', dueDate, description) => {
+    const trimmed = title.trim();
+    if (!trimmed) return;
     try {
       const newTask = await api.saveTask({
-        title,
+        title: trimmed,
         priority,
         is_completed: false,
-        due_date: dueDate,
-        description: '',
+        due_date: dueDate ? dueDate.trim() : undefined,
+        description: description ? description.trim() : undefined,
       });
       set((state) => ({ tasks: [newTask, ...state.tasks] }));
     } catch (err: unknown) {
@@ -46,11 +48,8 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   },
 
   toggleComplete: async (id) => {
-    const task = get().tasks.find((t) => t.id === id);
-    if (!task) return;
-    const updated = { ...task, is_completed: !task.is_completed };
     try {
-      await api.saveTask(updated);
+      const updated = await api.toggleTask(id);
       set((state) => ({
         tasks: state.tasks.map((t) => (t.id === id ? updated : t)),
       }));
@@ -60,10 +59,17 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   },
 
   updateTask: async (task) => {
+    const trimmed = task.title.trim();
+    if (!trimmed) return;
     try {
-      await api.saveTask(task);
+      const updated = await api.saveTask({
+        ...task,
+        title: trimmed,
+        due_date: task.due_date ? task.due_date.trim() : undefined,
+        description: task.description ? task.description.trim() : undefined,
+      });
       set((state) => ({
-        tasks: state.tasks.map((t) => (t.id === task.id ? task : t)),
+        tasks: state.tasks.map((t) => (t.id === task.id ? updated : t)),
       }));
     } catch (err: unknown) {
       set({ error: String(err) });
@@ -82,9 +88,22 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   },
 
   initListeners: async () => {
+    let lastDate = new Date().toLocaleDateString('en-CA');
+    const interval = setInterval(() => {
+      const currentDate = new Date().toLocaleDateString('en-CA');
+      if (currentDate !== lastDate) {
+        lastDate = currentDate;
+        get().fetchTasks();
+      }
+    }, 15000);
+
     const unlisten = await onEvent('tasks-updated', () => {
       get().fetchTasks();
     });
-    return unlisten;
+
+    return () => {
+      clearInterval(interval);
+      unlisten();
+    };
   },
 }));

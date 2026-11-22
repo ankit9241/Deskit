@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { FocusSession, FocusState } from '@/types/focus';
+import { FocusSession } from '@/types/focus';
 import * as api from '@/services/tauriApi';
 import { onEvent } from '@/services/events';
 
@@ -8,12 +8,13 @@ interface FocusStoreState {
   isLoading: boolean;
   error: string | null;
   fetchSession: () => Promise<void>;
-  startTimer: () => void;
-  pauseTimer: () => void;
-  resetTimer: () => void;
+  startTimer: () => Promise<void>;
+  pauseTimer: () => Promise<void>;
+  resetTimer: () => Promise<void>;
+  addMinutes: (minutes: number) => Promise<void>;
   tick: () => void;
   setDurations: (focusMins: number, breakMins: number) => Promise<void>;
-  switchMode: (mode: 'focus' | 'break') => void;
+  switchMode: (mode: 'focus' | 'break') => Promise<void>;
   saveCurrentSession: () => Promise<void>;
   initListeners: () => Promise<() => void>;
 }
@@ -26,6 +27,7 @@ const DEFAULT_FOCUS: FocusSession = {
   remaining_seconds: 25 * 60,
   is_running: false,
   updated_at: new Date().toISOString(),
+  ends_at: null,
 };
 
 export const useFocusStore = create<FocusStoreState>((set, get) => ({
@@ -47,101 +49,90 @@ export const useFocusStore = create<FocusStoreState>((set, get) => ({
     }
   },
 
-  startTimer: () => {
-    const { session } = get();
-    const nextState: FocusState = session.state === 'idle' || session.state === 'paused' ? 'focus' : session.state;
-    const updated: FocusSession = {
-      ...session,
-      state: nextState,
-      is_running: true,
-      remaining_seconds: session.remaining_seconds > 0 ? session.remaining_seconds : session.duration_minutes * 60,
-    };
-    set({ session: updated });
-    get().saveCurrentSession();
+  startTimer: async () => {
+    try {
+      const session = await api.startFocusTimer();
+      set({ session });
+    } catch (err: unknown) {
+      set({ error: String(err) });
+    }
   },
 
-  pauseTimer: () => {
-    const { session } = get();
-    const updated: FocusSession = {
-      ...session,
-      state: 'paused',
-      is_running: false,
-    };
-    set({ session: updated });
-    get().saveCurrentSession();
+  pauseTimer: async () => {
+    try {
+      const session = await api.pauseFocusTimer();
+      set({ session });
+    } catch (err: unknown) {
+      set({ error: String(err) });
+    }
   },
 
-  resetTimer: () => {
-    const { session } = get();
-    const updated: FocusSession = {
-      ...session,
-      state: 'idle',
-      is_running: false,
-      remaining_seconds: session.duration_minutes * 60,
-    };
-    set({ session: updated });
-    get().saveCurrentSession();
+  resetTimer: async () => {
+    try {
+      const session = await api.resetFocusTimer();
+      set({ session });
+    } catch (err: unknown) {
+      set({ error: String(err) });
+    }
+  },
+
+  addMinutes: async (minutes: number) => {
+    try {
+      const session = await api.addFocusMinutes(minutes);
+      set({ session });
+    } catch (err: unknown) {
+      set({ error: String(err) });
+    }
   },
 
   tick: () => {
     const { session } = get();
-    if (!session.is_running || session.remaining_seconds <= 0) return;
+    if (!session.is_running) return;
 
-    const remaining = session.remaining_seconds - 1;
+    if (session.ends_at) {
+      const targetTime = new Date(session.ends_at).getTime();
+      const now = Date.now();
+      const remaining = Math.max(0, Math.ceil((targetTime - now) / 1000));
 
-    if (remaining <= 0) {
-      // Transition between focus and break
-      if (session.state === 'focus') {
-        const next: FocusSession = {
-          ...session,
-          state: 'break',
-          remaining_seconds: session.break_minutes * 60,
-          is_running: false,
-        };
-        set({ session: next });
-        get().saveCurrentSession();
-      } else {
-        const next: FocusSession = {
-          ...session,
-          state: 'idle',
-          remaining_seconds: session.duration_minutes * 60,
-          is_running: false,
-        };
-        set({ session: next });
-        get().saveCurrentSession();
+      if (remaining <= 0) {
+        api.tickFocusTimer().then((s) => {
+          if (s) set({ session: s });
+        }).catch(() => {});
+      } else if (remaining !== session.remaining_seconds) {
+        set({
+          session: { ...session, remaining_seconds: remaining },
+        });
       }
     } else {
-      set({
-        session: { ...session, remaining_seconds: remaining },
-      });
+      const rem = session.remaining_seconds - 1;
+      if (rem <= 0) {
+        api.tickFocusTimer().then((s) => {
+          if (s) set({ session: s });
+        }).catch(() => {});
+      } else {
+        set({
+          session: { ...session, remaining_seconds: rem },
+        });
+      }
     }
   },
 
-  switchMode: (mode: 'focus' | 'break') => {
-    const { session } = get();
-    const duration = mode === 'focus' ? session.duration_minutes : session.break_minutes;
-    const updated: FocusSession = {
-      ...session,
-      state: mode,
-      is_running: false,
-      remaining_seconds: duration * 60,
-    };
-    set({ session: updated });
-    get().saveCurrentSession();
+  switchMode: async (mode: 'focus' | 'break') => {
+    try {
+      const session = await api.switchFocusMode(mode);
+      set({ session });
+    } catch (err: unknown) {
+      set({ error: String(err) });
+    }
   },
 
-  setDurations: async (focusMins, breakMins) => {
-    const { session } = get();
-    const updated: FocusSession = {
-      ...session,
-      duration_minutes: focusMins,
-      break_minutes: breakMins,
-      remaining_seconds: focusMins * 60,
-      state: 'idle',
-      is_running: false,
-    };
-    set({ session: updated });
-    await get().saveCurrentSession();
+  setDurations: async (focusMins: number, breakMins: number) => {
+    try {
+      const session = await api.setFocusDurations(focusMins, breakMins);
+      set({ session });
+    } catch (err: unknown) {
+      set({ error: String(err) });
+    }
   },
 
   saveCurrentSession: async () => {
@@ -154,11 +145,14 @@ export const useFocusStore = create<FocusStoreState>((set, get) => ({
   },
 
   initListeners: async () => {
-    const unlisten = await onEvent<FocusSession>('focus-updated', (payload) => {
+    const unlistenUpdated = await onEvent<FocusSession>('focus-updated', (payload) => {
       if (payload && typeof payload === 'object' && typeof payload.remaining_seconds === 'number') {
         set({ session: payload });
       }
     });
-    return unlisten;
+
+    return () => {
+      unlistenUpdated();
+    };
   },
 }));

@@ -19,14 +19,12 @@ import { useDeadlineStore } from '@/stores/deadlineStore';
 import { useGoalStore } from '@/stores/goalStore';
 import { formatTimeRemaining, formatRelativeDeadline } from '@/lib/utils';
 
-interface WidgetCapsuleProps {
+export interface WidgetCapsuleProps {
   widgetType: WidgetType;
   onExpand: () => void;
 }
 
-export const WidgetCapsule: React.FC<WidgetCapsuleProps> = ({ widgetType, onExpand }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
+export const WidgetCapsuleContent: React.FC<WidgetCapsuleProps> = ({ widgetType, onExpand }) => {
   // Stores
   const { settings } = useSettingsStore();
   const { session, startTimer, pauseTimer } = useFocusStore();
@@ -72,72 +70,75 @@ export const WidgetCapsule: React.FC<WidgetCapsuleProps> = ({ widgetType, onExpa
   const nextTask = pendingTasks[0];
 
   // Focus data
-  const totalDuration = ((safeSession.state === 'break' ? safeSession.break_minutes : safeSession.duration_minutes) || 25) * 60;
-  const remainingSecs = typeof safeSession.remaining_seconds === 'number' && !isNaN(safeSession.remaining_seconds)
-    ? safeSession.remaining_seconds
-    : totalDuration;
-  const progressFraction = Math.max(0, Math.min(1, 1 - remainingSecs / (totalDuration || 1500)));
+  const totalDuration =
+    ((safeSession.state === 'break' ? safeSession.break_minutes : safeSession.duration_minutes) || 25) * 60;
+  const remainingSecs =
+    typeof safeSession.remaining_seconds === 'number' && !isNaN(safeSession.remaining_seconds)
+      ? safeSession.remaining_seconds
+      : totalDuration;
+  const progress = totalDuration > 0 ? (totalDuration - remainingSecs) / totalDuration : 0;
 
   // Notes data
   const activeNote = safeNotes.find((n) => n.id === activeNoteId) || safeNotes[0];
 
   // Deadlines data
-  const pendingDeadlines = [...safeDeadlines].filter((d) => !d.is_completed).sort(
-    (a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
-  );
-  const nextDeadline = pendingDeadlines[0];
+  const upcomingDeadlines = safeDeadlines
+    .filter((d) => !d.is_completed)
+    .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime());
+  const urgentDeadline = upcomingDeadlines[0];
 
   // Goals data
-  const completedGoals = safeGoals.filter((g) => g.is_completed).length;
+  const totalGoals = safeGoals.length;
+  const completedToday = safeGoals.filter((g) => g.is_completed || g.current_count >= g.target_count).length;
 
   return (
     <motion.div
+      layoutId="widget-shell"
       onClick={onExpand}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      className="w-auto h-[36px] px-3.5 capsule-surface flex items-center justify-between gap-3 select-none cursor-pointer text-[#F1EFE8] shrink-0"
-      data-tauri-drag-region
+      className="flex items-center justify-between w-full h-full px-3.5 text-xs text-white cursor-pointer select-none overflow-hidden relative"
+      title="Click to expand"
     >
-      {/* 1. CLOCK CAPSULE */}
+      {/* CLOCK CAPSULE */}
       {widgetType === 'clock' && (
-        <div data-tauri-drag-region className="flex items-center justify-between w-full pointer-events-none">
+        <div className="flex items-center justify-between w-full font-tabular tracking-tight">
           <div className="flex items-center gap-1.5">
-            <ClockIcon size={13} className="text-[#C5B89D] shrink-0" />
-            <span className="font-tabular text-xs font-medium tracking-tight text-[#F1EFE8]">
+            <ClockIcon size={12} className="text-white/60 shrink-0" />
+            <span className="font-semibold text-white">
               {hours}:{minutes}
             </span>
           </div>
-
-          <span className="text-[10px] text-[#B7B3A9] font-medium tracking-tight">
-            {isHovered ? dateStr : timeFormat24 ? '24H' : rawHours >= 12 ? 'PM' : 'AM'}
+          <span className="text-[10px] text-white/50 uppercase font-sans">
+            {dateStr}
           </span>
         </div>
       )}
 
-      {/* 2. FOCUS TIMER CAPSULE */}
+      {/* FOCUS CAPSULE */}
       {widgetType === 'focus' && (
-        <div data-tauri-drag-region className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-1.5 pointer-events-none">
-            {/* Mini SVG Progress Ring */}
-            <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
-              <svg width="16" height="16" className="transform -rotate-90">
-                <circle cx="8" cy="8" r="6" stroke="rgba(241,239,232,0.12)" strokeWidth="1.5" fill="none" />
-                <circle
-                  cx="8"
-                  cy="8"
-                  r="6"
-                  stroke={safeSession.state === 'break' ? '#9DAE9B' : '#C5B89D'}
-                  strokeWidth="1.75"
-                  strokeDasharray="37.7"
-                  strokeDashoffset={37.7 * (1 - progressFraction)}
-                  strokeLinecap="round"
+        <div className="flex items-center justify-between w-full font-tabular">
+          <div className="flex items-center gap-2 min-w-0">
+            {/* Circular mini progress track */}
+            <div className="relative w-3.5 h-3.5 shrink-0 flex items-center justify-center">
+              <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                <path
+                  className="text-white/20"
+                  strokeWidth="4"
+                  stroke="currentColor"
                   fill="none"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                />
+                <path
+                  className={safeSession.state === 'break' ? 'text-[#30D158]' : 'text-[#FF9F0A]'}
+                  strokeDasharray={`${Math.round(progress * 100)}, 100`}
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  stroke="currentColor"
+                  fill="none"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 />
               </svg>
             </div>
-            <span className="font-tabular text-xs font-medium tracking-tight text-[#F1EFE8]">
+            <span className="font-mono text-white text-xs font-semibold">
               {formatTimeRemaining(remainingSecs)}
             </span>
           </div>
@@ -148,83 +149,90 @@ export const WidgetCapsule: React.FC<WidgetCapsuleProps> = ({ widgetType, onExpa
               if (safeSession.is_running) pauseTimer();
               else startTimer();
             }}
-            className="p-1 rounded-full text-[#B7B3A9] hover:text-[#F1EFE8] hover:bg-white/[0.08] transition-colors"
+            className="no-drag p-1 rounded-full hover:bg-white/10 text-white/80 hover:text-white transition-colors"
             title={safeSession.is_running ? 'Pause' : 'Start'}
           >
-            {safeSession.is_running ? <PauseIcon size={10} /> : <PlayIcon size={10} />}
+            {safeSession.is_running ? <PauseIcon size={11} /> : <PlayIcon size={11} />}
           </button>
         </div>
       )}
 
-      {/* 3. TASKS CAPSULE */}
+      {/* TASKS CAPSULE */}
       {widgetType === 'tasks' && (
-        <div data-tauri-drag-region className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-1.5 overflow-hidden mr-1 pointer-events-none">
-            <TasksIcon size={13} className="text-[#C5B89D] shrink-0" />
-            <span className="text-xs text-[#F1EFE8] truncate font-medium max-w-[85px]">
-              {nextTask ? nextTask.title : 'All caught up'}
+        <div className="flex items-center justify-between w-full min-w-0 gap-2">
+          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+            <TasksIcon size={12} className="text-[#0A84FF] shrink-0" />
+            <span className="truncate text-white/90 text-xs font-medium">
+              {nextTask ? nextTask.title : 'All done'}
             </span>
           </div>
-
           {nextTask ? (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 toggleTaskComplete(nextTask.id);
               }}
-              className="w-4 h-4 rounded-full border border-[#B7B3A9]/40 hover:border-[#9DAE9B] hover:bg-[#9DAE9B]/15 flex items-center justify-center text-transparent hover:text-[#9DAE9B] transition-all shrink-0"
-              title="Complete task"
+              className="no-drag w-4 h-4 rounded-full border border-white/30 hover:border-[#30D158] hover:bg-[#30D158]/20 flex items-center justify-center shrink-0 transition-colors"
+              title="Mark task completed"
             >
-              <CheckIcon size={10} />
+              <CheckIcon size={9} className="text-white/60 hover:text-[#30D158]" />
             </button>
           ) : (
-            <span className="w-1.5 h-1.5 rounded-full bg-[#9DAE9B] shrink-0" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#30D158] shrink-0" />
           )}
         </div>
       )}
 
-      {/* 4. NOTES CAPSULE */}
+      {/* NOTES CAPSULE */}
       {widgetType === 'notes' && (
-        <div data-tauri-drag-region className="flex items-center justify-between w-full pointer-events-none">
-          <div className="flex items-center gap-1.5 overflow-hidden mr-1">
-            <NotesIcon size={13} className="text-[#C5B89D] shrink-0" />
-            <span className="text-xs text-[#F1EFE8] truncate font-medium max-w-[95px]">
-              {activeNote?.title || 'Scratchpad'}
+        <div className="flex items-center justify-between w-full min-w-0">
+          <div className="flex items-center gap-1.5 min-w-0 flex-1 mr-2">
+            <NotesIcon size={12} className="text-[#BF5AF2] shrink-0" />
+            <span className="truncate text-white/90 text-xs font-medium">
+              {activeNote ? activeNote.title : 'Quick Note'}
             </span>
           </div>
-          <span className="text-[10px] text-[#9DAE9B] font-mono shrink-0">Saved</span>
+          <span className="text-[10px] text-white/40 shrink-0 font-mono">
+            {activeNote ? 'Saved' : 'Empty'}
+          </span>
         </div>
       )}
 
-      {/* 5. DEADLINES CAPSULE */}
+      {/* DEADLINES CAPSULE */}
       {widgetType === 'deadlines' && (
-        <div data-tauri-drag-region className="flex items-center justify-between w-full pointer-events-none">
-          <div className="flex items-center gap-1.5 overflow-hidden mr-1">
-            <DeadlinesIcon size={13} className="text-[#C5B89D] shrink-0" />
-            <span className="text-xs text-[#F1EFE8] truncate font-medium max-w-[80px]">
-              {nextDeadline?.title || 'No deadlines'}
+        <div className="flex items-center justify-between w-full min-w-0 gap-2">
+          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+            <DeadlinesIcon size={12} className="text-[#FF453A] shrink-0" />
+            <span className="truncate text-white/90 text-xs font-medium">
+              {urgentDeadline ? urgentDeadline.title : 'No deadlines'}
             </span>
           </div>
-          {nextDeadline && (
-            <span className="text-[10px] text-[#C9A77D] font-mono shrink-0">
-              {formatRelativeDeadline(nextDeadline.due_date)}
+          {urgentDeadline && (
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-white/80 shrink-0">
+              {formatRelativeDeadline(urgentDeadline.due_date)}
             </span>
           )}
         </div>
       )}
 
-      {/* 6. GOALS CAPSULE */}
+      {/* GOALS CAPSULE */}
       {widgetType === 'goals' && (
-        <div data-tauri-drag-region className="flex items-center justify-between w-full pointer-events-none">
+        <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-1.5">
-            <GoalsIcon size={13} className="text-[#9DAE9B] shrink-0" />
-            <span className="text-xs text-[#F1EFE8] font-medium">Goals</span>
+            <GoalsIcon size={12} className="text-[#30D158] shrink-0" />
+            <span className="text-xs font-medium text-white/90">Daily Goals</span>
           </div>
-          <span className="text-[10px] font-mono text-[#9DAE9B] bg-[#9DAE9B]/10 px-1.5 py-0.2 rounded-full">
-            {completedGoals}/{safeGoals.length}
+          <span className="text-xs font-mono text-white/70">
+            <span className="text-[#30D158] font-bold">{completedToday}</span>/{totalGoals}
           </span>
         </div>
       )}
     </motion.div>
   );
 };
+
+export const WidgetCapsule: React.FC<WidgetCapsuleProps> = (props) => {
+  return <WidgetCapsuleContent {...props} />;
+};
+
+export default WidgetCapsule;

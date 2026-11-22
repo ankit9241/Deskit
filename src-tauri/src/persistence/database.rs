@@ -14,12 +14,22 @@ impl DbState {
             std::fs::create_dir_all(parent)?;
         }
         let mut conn = Connection::open(db_path)?;
+        conn.execute_batch(
+            "PRAGMA journal_mode = WAL;
+             PRAGMA synchronous = NORMAL;
+             PRAGMA foreign_keys = ON;
+             PRAGMA busy_timeout = 5000;",
+        )?;
         run_migrations(&mut conn)?;
         Ok(Self(Arc::new(Mutex::new(conn))))
     }
 
     pub fn new_in_memory() -> Result<Self, Box<dyn std::error::Error>> {
         let mut conn = Connection::open_in_memory()?;
+        conn.execute_batch(
+            "PRAGMA foreign_keys = ON;
+             PRAGMA busy_timeout = 5000;",
+        )?;
         run_migrations(&mut conn)?;
         Ok(Self(Arc::new(Mutex::new(conn))))
     }

@@ -33,8 +33,8 @@ function getInitialState() {
     lockPosition: false,
     snapToEdges: true,
     activeWorkspace: null,
-    autoCollapse: false,
-    collapseDelaySeconds: 30,
+    autoCollapse: true,
+    collapseDelaySeconds: 5,
   };
 
   if (typeof window === 'undefined') {
@@ -53,8 +53,8 @@ function getInitialState() {
         lockPosition: !!parsed.lockPosition,
         snapToEdges: parsed.snapToEdges !== false,
         activeWorkspace: parsed.activeWorkspace || null,
-        autoCollapse: !!parsed.autoCollapse,
-        collapseDelaySeconds: typeof parsed.collapseDelaySeconds === 'number' ? parsed.collapseDelaySeconds : 30,
+        autoCollapse: parsed.autoCollapse !== undefined ? !!parsed.autoCollapse : true,
+        collapseDelaySeconds: typeof parsed.collapseDelaySeconds === 'number' ? parsed.collapseDelaySeconds : 5,
       };
     }
   } catch {

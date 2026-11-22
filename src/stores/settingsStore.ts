@@ -12,14 +12,16 @@ interface SettingsState {
   toggleAutostart: () => Promise<void>;
   toggleCloseToTray: () => Promise<void>;
   toggleTimeFormat: () => Promise<void>;
+  toggleSeconds: () => Promise<void>;
   initListeners: () => Promise<() => void>;
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   settings: {
-    launch_at_login: false,
+    launch_at_login: true,
     close_to_tray: true,
     time_format_24h: false,
+    show_seconds: true,
     default_visibility_mode: 'always_on_top',
     theme: 'dark',
   },
@@ -60,6 +62,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   toggleTimeFormat: async () => {
     const current = get().settings.time_format_24h;
     await get().updateSettings({ time_format_24h: !current });
+  },
+
+  toggleSeconds: async () => {
+    const current = get().settings.show_seconds;
+    await get().updateSettings({ show_seconds: !current });
   },
 
   initListeners: async () => {

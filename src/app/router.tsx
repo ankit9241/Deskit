@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { WidgetType } from '@/types/widget';
 import { WidgetContainer } from '@/components/widgets/WidgetContainer';
-import { ClockWidget } from '@/features/clock/ClockWidget';
-import { TasksWidget } from '@/features/tasks/TasksWidget';
-import { FocusWidget } from '@/features/focus/FocusWidget';
-import { NotesWidget } from '@/features/notes/NotesWidget';
-import { DeadlinesWidget } from '@/features/deadlines/DeadlinesWidget';
-import { GoalsWidget } from '@/features/goals/GoalsWidget';
+import { ClockWidgetContent } from '@/features/clock/ClockWidget';
+import { TasksWidgetContent } from '@/features/tasks/TasksWidget';
+import { FocusWidgetContent } from '@/features/focus/FocusWidget';
+import { NotesWidgetContent } from '@/features/notes/NotesWidget';
+import { DeadlinesWidgetContent } from '@/features/deadlines/DeadlinesWidget';
+import { GoalsWidgetContent } from '@/features/goals/GoalsWidget';
 import { Sidebar, ManagerTab } from '@/components/manager/Sidebar';
 import { MyWidgetsView } from '@/components/manager/MyWidgetsView';
 import { WidgetLibraryView } from '@/components/manager/WidgetLibraryView';
@@ -15,6 +15,8 @@ import { SettingsView } from '@/components/manager/SettingsView';
 import { FloatingDock } from '@/components/shared/FloatingDock';
 import { useWidgetStore } from '@/stores/widgetStore';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { useClockStore } from '@/stores/clockStore';
+import { BellIcon } from '@/components/shared/icons';
 import { isTauri } from '@/services/tauriApi';
 
 interface ErrorBoundaryProps {
@@ -43,7 +45,7 @@ class WidgetErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBound
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center h-full w-full p-4 bg-[#242421] text-[#F1EFE8] text-center select-none">
+        <div className="flex flex-col items-center justify-center h-full w-full p-4 bg-[#1C1C1E] text-[#F1EFE8] text-center select-none rounded-[20px] border border-white/10">
           <div className="w-6 h-6 rounded-full bg-[#C58D85]/20 text-[#C58D85] flex items-center justify-center mb-2 text-xs font-bold">
             !
           </div>
@@ -67,10 +69,73 @@ class WidgetErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBound
   }
 }
 
+// ---------------- INDEPENDENT WIDGET WINDOW VIEW ----------------
+interface WidgetWindowViewProps {
+  widgetId: string;
+  widgetType: WidgetType;
+}
+
+const WidgetWindowView: React.FC<WidgetWindowViewProps> = ({ widgetId, widgetType }) => {
+  const getWidgetComponent = () => {
+    switch (widgetType) {
+      case 'clock':
+        return <ClockWidgetContent />;
+      case 'tasks':
+        return <TasksWidgetContent />;
+      case 'focus':
+        return <FocusWidgetContent />;
+      case 'notes':
+        return <NotesWidgetContent />;
+      case 'deadlines':
+        return <DeadlinesWidgetContent />;
+      case 'goals':
+        return <GoalsWidgetContent />;
+      default:
+        return (
+          <div className="p-4 text-xs text-[#C58D85]">
+            Unknown widget type: {widgetType}
+          </div>
+        );
+    }
+  };
+
+  const getWidgetTitle = () => {
+    switch (widgetType) {
+      case 'clock':
+        return 'Clock';
+      case 'tasks':
+        return 'Tasks';
+      case 'focus':
+        return 'Focus Timer';
+      case 'notes':
+        return 'Quick Notes';
+      case 'deadlines':
+        return 'Deadlines';
+      case 'goals':
+        return 'Daily Goals';
+      default:
+        return 'Widget';
+    }
+  };
+
+  useEffect(() => {
+    document.title = `DESKIT — ${getWidgetTitle()}`;
+  }, [widgetType]);
+
+  return (
+    <WidgetErrorBoundary>
+      <WidgetContainer widgetId={widgetId} widgetType={widgetType} title={getWidgetTitle()}>
+        {getWidgetComponent()}
+      </WidgetContainer>
+    </WidgetErrorBoundary>
+  );
+};
+
 export const Router: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ManagerTab>('my_widgets');
   const { widgets, fetchWidgets, initListeners: initWidgetListeners } = useWidgetStore();
   const { fetchSettings, initListeners: initSettingsListeners } = useSettingsStore();
+  const { ringingAlarm, dismissAlarm, initListeners: initClockListeners } = useClockStore();
 
   // Multi-tier route resolution - evaluated once and locked in state
   const [widgetRoute] = useState<{ widgetId: string; widgetType: WidgetType } | null>(() => {
@@ -86,15 +151,7 @@ export const Router: React.FC = () => {
       type = type || (globalWidget.type as WidgetType);
     }
 
-    // 3. SessionStorage persistence
-    if (!id) {
-      try { id = sessionStorage.getItem('DESKIT_WIDGET_ID'); } catch {}
-    }
-    if (!type) {
-      try { type = sessionStorage.getItem('DESKIT_WIDGET_TYPE') as WidgetType | null; } catch {}
-    }
-
-    // 4. Tauri window label inspection
+    // 3. Tauri window label inspection
     if ((!id || !type) && isTauri()) {
       try {
         const rawLabel = (window as any).__TAURI_INTERNALS__?.metadata?.currentWindow?.label || '';
@@ -106,6 +163,14 @@ export const Router: React.FC = () => {
           }
         }
       } catch {}
+    }
+
+    // 4. SessionStorage persistence
+    if (!id) {
+      try { id = sessionStorage.getItem('DESKIT_WIDGET_ID'); } catch {}
+    }
+    if (!type) {
+      try { type = sessionStorage.getItem('DESKIT_WIDGET_TYPE') as WidgetType | null; } catch {}
     }
 
     // 5. LocalStorage lookup if id is known but type was omitted
@@ -140,18 +205,6 @@ export const Router: React.FC = () => {
       type = 'focus';
     }
 
-    // 8. If in Tauri and window is not the main window, infer from window label
-    if ((!id || !type) && isTauri()) {
-      try {
-        const label = (window as any).__TAURI_INTERNALS__?.metadata?.currentWindow?.label;
-        if (label && label !== 'main' && label.startsWith('widget-')) {
-          const parts = label.split('-');
-          type = (parts[1] || 'focus') as WidgetType;
-          id = parts.slice(2).join('-') || 'w-' + Date.now();
-        }
-      } catch {}
-    }
-
     if (id && type) {
       try {
         sessionStorage.setItem('DESKIT_WIDGET_ID', id);
@@ -163,83 +216,30 @@ export const Router: React.FC = () => {
     return null;
   });
 
-  const widgetId = widgetRoute?.widgetId;
-  const widgetType = widgetRoute?.widgetType;
-
   useEffect(() => {
     fetchWidgets().catch(() => {});
     fetchSettings().catch(() => {});
     const unlistenWidgets = initWidgetListeners();
     const unlistenSettings = initSettingsListeners();
+    const unlistenClock = initClockListeners();
 
     return () => {
       unlistenWidgets.then((fn) => fn && fn()).catch(() => {});
       unlistenSettings.then((fn) => fn && fn()).catch(() => {});
+      unlistenClock.then((fn) => fn && fn()).catch(() => {});
     };
   }, []);
 
   // ---------------- INDEPENDENT WIDGET WINDOW ROUTE ----------------
-  if (widgetId && widgetType) {
-    const getWidgetComponent = () => {
-      switch (widgetType) {
-        case 'clock':
-          return <ClockWidget />;
-        case 'tasks':
-          return <TasksWidget />;
-        case 'focus':
-          return <FocusWidget />;
-        case 'notes':
-          return <NotesWidget />;
-        case 'deadlines':
-          return <DeadlinesWidget />;
-        case 'goals':
-          return <GoalsWidget />;
-        default:
-          return (
-            <div className="p-4 text-xs text-[#C58D85]">
-              Unknown widget type: {widgetType}
-            </div>
-          );
-      }
-    };
-
-    const getWidgetTitle = () => {
-      switch (widgetType) {
-        case 'clock':
-          return 'Clock';
-        case 'tasks':
-          return 'Tasks';
-        case 'focus':
-          return 'Focus Timer';
-        case 'notes':
-          return 'Quick Notes';
-        case 'deadlines':
-          return 'Deadlines';
-        case 'goals':
-          return 'Daily Goals';
-        default:
-          return 'Widget';
-      }
-    };
-
-    useEffect(() => {
-      document.title = `DESKIT — ${getWidgetTitle()}`;
-    }, [widgetType]);
-
-    return (
-      <WidgetErrorBoundary>
-        <WidgetContainer widgetId={widgetId} widgetType={widgetType} title={getWidgetTitle()}>
-          {getWidgetComponent()}
-        </WidgetContainer>
-      </WidgetErrorBoundary>
-    );
+  if (widgetRoute?.widgetId && widgetRoute?.widgetType) {
+    return <WidgetWindowView widgetId={widgetRoute.widgetId} widgetType={widgetRoute.widgetType} />;
   }
 
   // ---------------- MAIN MANAGER APPLICATION ROUTE ----------------
   const pinnedCount = widgets.filter((w) => w.is_pinned).length;
 
   return (
-    <div className="relative flex h-screen w-screen bg-[#242421] text-[#F1EFE8] select-none overflow-hidden font-sans">
+    <div className="relative flex h-screen w-screen bg-[#1C1C1E] text-[#F1EFE8] select-none overflow-hidden font-sans">
       {/* Compact Left Sidebar */}
       <Sidebar
         activeTab={activeTab}
@@ -257,6 +257,25 @@ export const Router: React.FC = () => {
 
       {/* Floating Manager Dock */}
       <FloatingDock />
+
+      {/* Ringing Alarm Global Banner */}
+      {ringingAlarm && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-red-600/90 border border-red-400 rounded-xl shadow-2xl flex items-center gap-3 animate-pulse">
+          <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white shrink-0">
+            <BellIcon size={14} className="animate-bounce" />
+          </div>
+          <div>
+            <div className="text-[10px] uppercase font-bold text-red-200">Alarm Ringing</div>
+            <div className="text-sm font-semibold text-white font-tabular">{ringingAlarm.time_str} - {ringingAlarm.title}</div>
+          </div>
+          <button
+            onClick={() => dismissAlarm(ringingAlarm.id)}
+            className="ml-3 px-3 py-1 bg-white text-red-700 hover:bg-red-50 font-bold text-xs rounded-lg shadow transition-all cursor-pointer shrink-0"
+          >
+            DISMISS
+          </button>
+        </div>
+      )}
     </div>
   );
 };

@@ -38,6 +38,7 @@ __declspec(dllimport) int __stdcall CloseHandle(void*);
 __declspec(dllimport) void __stdcall ExitProcess(unsigned int);
 __declspec(dllimport) wchar_t** __stdcall CommandLineToArgvW(const wchar_t*, int*);
 __declspec(dllimport) wchar_t* __stdcall GetCommandLineW();
+__declspec(dllimport) unsigned long __stdcall GetModuleFileNameW(void*, wchar_t*, unsigned long);
 
 static int my_wcslen(const wchar_t* s) {
     int len = 0;
@@ -69,8 +70,19 @@ void mainCRTStartup() {
     }
 
     if (out_file) {
-        wchar_t cmd[1024];
-        my_wcscpy(cmd, L"\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Tools\\MSVC\\14.29.30133\\bin\\Hostx64\\x64\\lib.exe\" /NOLOGO /MACHINE:X64 /DEF:\"winsdk\\lib_x64\\uuid.def\" /OUT:\"");
+        wchar_t defPath[1024];
+        GetModuleFileNameW(0, defPath, 1024);
+        wchar_t* p = defPath + my_wcslen(defPath);
+        while (p > defPath && *p != L'\\') p--;
+        if (p > defPath) *p = 0;
+        while (p > defPath && *p != L'\\') p--;
+        if (p > defPath) *p = 0;
+        my_wcscat(defPath, L"\\lib_x64\\uuid.def");
+
+        wchar_t cmd[2048];
+        my_wcscpy(cmd, L"\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Tools\\MSVC\\14.29.30133\\bin\\Hostx64\\x64\\lib.exe\" /NOLOGO /MACHINE:X64 /DEF:\"");
+        my_wcscat(cmd, defPath);
+        my_wcscat(cmd, L"\" /OUT:\"");
         my_wcscat(cmd, out_file);
         my_wcscat(cmd, L"\"");
 

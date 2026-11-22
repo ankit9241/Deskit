@@ -48,7 +48,7 @@ impl WidgetType {
 
     pub fn min_dimensions(&self) -> (f64, f64) {
         match self {
-            WidgetType::Clock => (200.0, 110.0),
+            WidgetType::Clock => (200.0, 100.0),
             WidgetType::Tasks => (280.0, 260.0),
             WidgetType::Focus => (240.0, 180.0),
             WidgetType::Notes => (260.0, 220.0),
@@ -59,12 +59,12 @@ impl WidgetType {
 
     pub fn max_dimensions(&self) -> (f64, f64) {
         match self {
-            WidgetType::Clock => (600.0, 400.0),
-            WidgetType::Tasks => (800.0, 900.0),
-            WidgetType::Focus => (600.0, 600.0),
-            WidgetType::Notes => (800.0, 900.0),
-            WidgetType::Deadlines => (800.0, 900.0),
-            WidgetType::Goals => (800.0, 900.0),
+            WidgetType::Clock => (1600.0, 1200.0),
+            WidgetType::Tasks => (1600.0, 1200.0),
+            WidgetType::Focus => (1200.0, 1000.0),
+            WidgetType::Notes => (1600.0, 1200.0),
+            WidgetType::Deadlines => (1600.0, 1200.0),
+            WidgetType::Goals => (1600.0, 1200.0),
         }
     }
 }

@@ -1,0 +1,139 @@
+/* ================= WIDGET IDLE COLLAPSE (macOS / Dynamic Island style) =================
+   Morphing shell + always-mounted layer crossfades.
+   Animated properties only: width, height, border-radius, opacity, transform, filter.
+   backdrop-filter / box-shadow on the shell are never animated.
+*/
+
+/* Root shell: the glass surface. Only width / height / border-radius morph.
+   Anchored to top-center of its container so it shrinks toward the anchor. */
+.widget-shell {
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  contain: layout paint;
+  will-change: width, height;
+
+  transition:
+    width var(--dur) var(--ease),
+    height var(--dur) var(--ease),
+    border-radius var(--dur) var(--ease);
+}
+
+/* Both layers are always mounted (never added/removed). Only classes and
+   attributes toggle between states — no mount/unmount jank. */
+.widget-layer {
+  position: absolute;
+  will-change: opacity, transform, filter;
+}
+
+/* --- Layer A: expanded content.
+   Fixed natural size pinned to the top center of the shell, so the shell
+   clips it while shrinking and the content never re-flows. --- */
+.widget-layer-expanded {
+  top: 0;
+  left: 50%;
+  z-index: 1;
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0);
+  pointer-events: auto;
+}
+
+/* --- Layer B: collapsed capsule content (compact view) --- */
+.widget-layer-collapsed {
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  opacity: 0;
+  transform: scale(1.1);
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+/* ===== Collapsed state: destination of a collapse ===== */
+/* Layer A hides immediately, no delay. */
+[data-state="collapsed"] .widget-layer-expanded {
+  opacity: 0;
+  transform: scale(0.9);
+  filter: blur(6px);
+  pointer-events: none;
+  transition:
+    opacity calc(0.4 * var(--dur)) var(--ease),
+    transform calc(0.5 * var(--dur)) var(--ease),
+    filter calc(0.5 * var(--dur)) var(--ease);
+}
+
+/* Layer B appears late. */
+[data-state="collapsed"] .widget-layer-collapsed {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0);
+  pointer-events: auto;
+  transition:
+    opacity calc(0.4 * var(--dur)) var(--ease) calc(0.35 * var(--dur)),
+    transform calc(0.4 * var(--dur)) var(--ease) calc(0.35 * var(--dur)),
+    filter calc(0.4 * var(--dur)) var(--ease) calc(0.35 * var(--dur));
+}
+
+/* ===== Expanded state: destination of an expand ===== */
+/* Layer B hides quickly. */
+[data-state="expanded"] .widget-layer-collapsed {
+  opacity: 0;
+  transform: scale(1.1);
+  filter: blur(4px);
+  pointer-events: none;
+  transition:
+    opacity calc(0.25 * var(--dur)) var(--ease),
+    transform calc(0.25 * var(--dur)) var(--ease),
+    filter calc(0.25 * var(--dur)) var(--ease);
+}
+
+/* Layer A appears late. */
+[data-state="expanded"] .widget-layer-expanded {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0);
+  pointer-events: auto;
+  transition:
+    opacity calc(0.4 * var(--dur)) var(--ease) calc(0.2 * var(--dur)),
+    transform calc(0.4 * var(--dur)) var(--ease) calc(0.2 * var(--dur)),
+    filter calc(0.4 * var(--dur)) var(--ease) calc(0.2 * var(--dur));
+}
+
+/* ===== Reduced motion: instant size change, simple opacity crossfade ===== */
+@media (prefers-reduced-motion: reduce) {
+  .widget-shell {
+    --dur: 1ms;
+    transition: width 1ms, height 1ms, border-radius 1ms;
+  }
+
+  .widget-layer-expanded,
+  .widget-layer-collapsed {
+    transform: scale(1);
+    filter: none;
+    transition: opacity 150ms ease;
+  }
+
+  [data-state="collapsed"] .widget-layer-expanded,
+  [data-state="collapsed"] .widget-layer-collapsed,
+  [data-state="expanded"] .widget-layer-expanded,
+  [data-state="expanded"] .widget-layer-collapsed {
+    transition: opacity 150ms ease;
+  }
+
+  [data-state="collapsed"] .widget-layer-expanded {
+    opacity: 0;
+  }
+  [data-state="collapsed"] .widget-layer-collapsed {
+    opacity: 1;
+  }
+  [data-state="expanded"] .widget-layer-collapsed {
+    opacity: 0;
+  }
+  [data-state="expanded"] .widget-layer-expanded {
+    opacity: 1;
+  }
+}

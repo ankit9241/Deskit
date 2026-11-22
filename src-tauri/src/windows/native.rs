@@ -13,14 +13,13 @@ pub enum NativeWindowError {
 pub trait NativeWindowExt {
     fn set_native_always_on_top(&self, enable: bool) -> Result<(), NativeWindowError>;
     fn apply_native_backdrop(&self) -> Result<(), NativeWindowError>;
+    fn update_window_clip_region(&self, is_collapsed: bool, radius: u32) -> Result<(), NativeWindowError>;
 }
 
 #[cfg(target_os = "windows")]
 mod win32_impl {
     use super::*;
-    use windows::core::s;
     use windows::Win32::Foundation::HWND;
-    use windows::Win32::System::LibraryLoader::{GetProcAddress, LoadLibraryA};
     use windows::Win32::UI::WindowsAndMessaging::{
         SetWindowPos, HWND_NOTOPMOST, HWND_TOPMOST, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
     };
@@ -51,52 +50,50 @@ mod win32_impl {
         Ok(())
     }
 
-    type DwmSetWindowAttributeFn = unsafe extern "system" fn(
-        hwnd: HWND,
-        dw_attribute: u32,
-        pv_attribute: *const std::ffi::c_void,
-        cb_attribute: u32,
-    ) -> windows::core::HRESULT;
-
     pub fn apply_backdrop(window: &WebviewWindow) -> Result<(), NativeWindowError> {
-        let hwnd_raw = window
-            .hwnd()
-            .map_err(|e| NativeWindowError::HwndError(e.to_string()))?;
+        // Enable immersive dark mode so Windows DWM applies dark theme materials
+        if let Ok(hwnd_raw) = window.hwnd() {
+            unsafe {
+                let hwnd = HWND(hwnd_raw.0 as _);
 
-        let hwnd = HWND(hwnd_raw.0 as _);
+                let dark: u32 = 1;
+                let _ = windows::Win32::Graphics::Dwm::DwmSetWindowAttribute(
+                    hwnd,
+                    windows::Win32::Graphics::Dwm::DWMWA_USE_IMMERSIVE_DARK_MODE,
+                    &dark as *const _ as _,
+                    std::mem::size_of::<u32>() as u32,
+                );
 
-        unsafe {
-            if let Ok(dwmapi) = LoadLibraryA(s!("dwmapi.dll")) {
-                if let Some(func_ptr) = GetProcAddress(dwmapi, s!("DwmSetWindowAttribute")) {
-                    let set_window_attribute: DwmSetWindowAttributeFn = std::mem::transmute(func_ptr);
+                // DWMWA_WINDOW_CORNER_PREFERENCE:
+                // Apply native DWM rounded corners (DWMWCP_ROUND).
+                // Do NOT use SetWindowRgn as GDI regions force Windows to draw the legacy
+                // OS window caption/titlebar tab (- □ X) behind undecorated windows.
+                let corner_pref: u32 = windows::Win32::Graphics::Dwm::DWMWCP_ROUND.0 as u32;
+                let _ = windows::Win32::Graphics::Dwm::DwmSetWindowAttribute(
+                    hwnd,
+                    windows::Win32::Graphics::Dwm::DWMWA_WINDOW_CORNER_PREFERENCE,
+                    &corner_pref as *const _ as _,
+                    std::mem::size_of::<u32>() as u32,
+                );
 
-                    // 1. Force Immersive Dark Mode: DWMWA_USE_IMMERSIVE_DARK_MODE = 20
-                    let dark_mode: i32 = 1;
-                    let _ = set_window_attribute(
-                        hwnd,
-                        20,
-                        &dark_mode as *const _ as *const std::ffi::c_void,
-                        std::mem::size_of::<i32>() as u32,
-                    );
-
-                    // 2. Set Caption & Border to Dark Graphite #242421 (COLORREF: 0x00212424)
-                    let caption_color: u32 = 0x00212424;
-                    let _ = set_window_attribute(
-                        hwnd,
-                        35, // DWMWA_CAPTION_COLOR
-                        &caption_color as *const _ as *const std::ffi::c_void,
-                        std::mem::size_of::<u32>() as u32,
-                    );
-                    let _ = set_window_attribute(
-                        hwnd,
-                        34, // DWMWA_BORDER_COLOR
-                        &caption_color as *const _ as *const std::ffi::c_void,
-                        std::mem::size_of::<u32>() as u32,
-                    );
-                }
+                // Ensure any previous GDI window region is completely removed so the OS window
+                // remains 100% frameless and undecorated with no titlebar tab.
+                let _ = windows::Win32::Graphics::Gdi::SetWindowRgn(
+                    hwnd,
+                    windows::Win32::Graphics::Gdi::HRGN(std::ptr::null_mut()),
+                    true,
+                );
             }
         }
 
+        Ok(())
+    }
+
+    pub fn update_clip_region(
+        _window: &WebviewWindow,
+        _is_collapsed: bool,
+        _radius: u32,
+    ) -> Result<(), NativeWindowError> {
         Ok(())
     }
 }
@@ -113,6 +110,10 @@ mod fallback_impl {
     }
 
     pub fn apply_backdrop(_window: &WebviewWindow) -> Result<(), NativeWindowError> {
+        Ok(())
+    }
+
+    pub fn update_clip_region(_window: &WebviewWindow, _is_collapsed: bool, _radius: u32) -> Result<(), NativeWindowError> {
         Ok(())
     }
 }
@@ -137,6 +138,17 @@ impl NativeWindowExt for WebviewWindow {
         #[cfg(not(target_os = "windows"))]
         {
             fallback_impl::apply_backdrop(self)
+        }
+    }
+
+    fn update_window_clip_region(&self, is_collapsed: bool, radius: u32) -> Result<(), NativeWindowError> {
+        #[cfg(target_os = "windows")]
+        {
+            win32_impl::update_clip_region(self, is_collapsed, radius)
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            fallback_impl::update_clip_region(self, is_collapsed, radius)
         }
     }
 }

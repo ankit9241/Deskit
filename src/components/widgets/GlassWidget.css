@@ -1,0 +1,131 @@
+/* ================= PREMIUM LIQUID GLASS WIDGET =================
+   Authentic Liquid Glass visual system:
+   - Light, neutral, only moderately blurred (20px blur, 130% saturation)
+   - Translucent dark-tinted glass body: rgba(24, 24, 26, 0.28)
+   - Whatever is behind the widget stays visible as soft blurred shapes
+   - Crisp 1px translucent perimeter border: rgba(255, 255, 255, 0.14)
+   - Specular top rim highlight: inset 0 1px 0 rgba(255, 255, 255, 0.25)
+   - Sub-rim bottom highlight: inset 0 -1px 0 rgba(255, 255, 255, 0.04)
+*/
+
+:root {
+  --glass-tint: 0.28;
+  --glass-tint-color: 20, 20, 24;
+  --glass-blur: 20px;
+  --glass-saturation: 130%;
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-radius: 14px;
+  --glass-radius-capsule: 9999px;
+  --glass-header-divider: rgba(255, 255, 255, 0.10);
+  --glass-text-secondary: rgba(255, 255, 255, 0.55);
+}
+
+.glass-widget {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  color: var(--glass-text, #ffffff);
+
+  /* Premium Liquid glass surface */
+  background:
+    linear-gradient(135deg,
+      rgba(255, 255, 255, 0.10) 0%,
+      rgba(255, 255, 255, 0.02) 40%,
+      rgba(255, 255, 255, 0.04) 100%),
+    rgba(20, 20, 24, var(--glass-tint, 0.28));
+
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.14));
+  border-radius: var(--glass-radius, 14px);
+
+  backdrop-filter: blur(var(--glass-blur, 20px)) saturate(var(--glass-saturation, 130%));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 20px)) saturate(var(--glass-saturation, 130%));
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.glass-widget.native-blur {
+  background:
+    linear-gradient(135deg,
+      rgba(255, 255, 255, 0.10) 0%,
+      rgba(255, 255, 255, 0.02) 40%,
+      rgba(255, 255, 255, 0.04) 100%
+    ),
+    rgba(20, 20, 24, var(--glass-tint, 0.28));
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.14));
+  border-radius: 14px;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.glass-widget__content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.glass-widget:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+/* Dynamic Island capsule state */
+.glass-widget--capsule,
+.capsule-surface {
+  border-radius: 9999px;
+  background:
+    linear-gradient(135deg,
+      rgba(255, 255, 255, 0.09) 0%,
+      rgba(255, 255, 255, 0.02) 30%,
+      rgba(255, 255, 255, 0) 55%,
+      rgba(255, 255, 255, 0.03) 100%),
+    rgba(18, 18, 22, var(--glass-tint, 0.15));
+
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.18));
+
+  backdrop-filter: blur(var(--glass-blur, 20px)) saturate(var(--glass-saturation, 130%));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 20px)) saturate(var(--glass-saturation, 130%));
+
+  box-shadow:
+    inset 0 1.5px 0.5px rgba(255, 255, 255, 0.35),
+    inset 1px 0 0.5px rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.glass-widget--capsule.native-blur,
+.capsule-surface.native-blur {
+  border-radius: 9999px !important;
+  background:
+    linear-gradient(135deg,
+      rgba(255, 255, 255, 0.09) 0%,
+      rgba(255, 255, 255, 0.02) 30%,
+      rgba(255, 255, 255, 0) 55%,
+      rgba(255, 255, 255, 0.03) 100%),
+    rgba(18, 18, 22, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(20px) saturate(130%);
+  -webkit-backdrop-filter: blur(20px) saturate(130%);
+  box-shadow:
+    inset 0 1.5px 0.5px rgba(255, 255, 255, 0.35),
+    inset 1px 0 0.5px rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.glass-widget--capsule:hover,
+.capsule-surface:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-widget {
+    transition: none;
+  }
+}

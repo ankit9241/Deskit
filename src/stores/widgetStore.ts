@@ -105,9 +105,17 @@ export const useWidgetStore = create<WidgetState>((set, get) => ({
     const unlisten2 = await onEvent('widget-removed', () => {
       get().fetchWidgets();
     });
+    const unlisten3 = await onEvent('widgets-updated', () => {
+      get().fetchWidgets();
+    });
+    const unlisten4 = await onEvent('workspace-switched', () => {
+      get().fetchWidgets();
+    });
     return () => {
       unlisten1();
       unlisten2();
+      unlisten3();
+      unlisten4();
     };
   },
 }));

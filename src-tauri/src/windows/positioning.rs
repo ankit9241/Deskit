@@ -52,4 +52,70 @@ impl WindowPositioning {
 
         (clamped_x, clamped_y, clamped_w, clamped_h)
     }
+
+    /// Check whether a rectangle intersects reasonably with any connected monitor.
+    /// If not (e.g. monitor disconnected or resolution changed), clamp it to the primary or first monitor.
+    pub fn clamp_to_visible_screen(
+        app: &AppHandle,
+        x: f64,
+        y: f64,
+        width: f64,
+        height: f64,
+    ) -> (f64, f64, f64, f64) {
+        let monitors = app.available_monitors().unwrap_or_default();
+        if monitors.is_empty() {
+            let clamped_x = x.clamp(20.0, (1920.0 - width - 20.0).max(20.0));
+            let clamped_y = y.clamp(20.0, (1080.0 - height - 20.0).max(20.0));
+            return (clamped_x, clamped_y, width, height);
+        }
+
+        // Check if window has at least 60px horizontally and 40px vertically visible in any monitor
+        let is_visible = monitors.iter().any(|mon| {
+            let scale = mon.scale_factor().max(0.5);
+            let mon_pos = mon.position();
+            let mon_size = mon.size();
+
+            let mx = mon_pos.x as f64 / scale;
+            let my = mon_pos.y as f64 / scale;
+            let mw = mon_size.width as f64 / scale;
+            let mh = mon_size.height as f64 / scale;
+
+            let overlap_x = (x + width).min(mx + mw) - x.max(mx);
+            let overlap_y = (y + height).min(my + mh) - y.max(my);
+
+            overlap_x >= 60.0 && overlap_y >= 40.0
+        });
+
+        if is_visible {
+            return (x, y, width, height);
+        }
+
+        // Window is off-screen! Clamp onto the primary monitor or first available monitor
+        let target_mon = app
+            .primary_monitor()
+            .ok()
+            .flatten()
+            .or_else(|| monitors.into_iter().next());
+
+        if let Some(mon) = target_mon {
+            let scale = mon.scale_factor().max(0.5);
+            let mon_pos = mon.position();
+            let mon_size = mon.size();
+
+            let mx = mon_pos.x as f64 / scale;
+            let my = mon_pos.y as f64 / scale;
+            let mw = mon_size.width as f64 / scale;
+            let mh = mon_size.height as f64 / scale;
+
+            let clamped_w = width.min(mw - 40.0).max(100.0);
+            let clamped_h = height.min(mh - 40.0).max(40.0);
+
+            let clamped_x = x.clamp(mx + 20.0, (mx + mw - clamped_w - 20.0).max(mx + 20.0));
+            let clamped_y = y.clamp(my + 40.0, (my + mh - clamped_h - 20.0).max(my + 40.0));
+
+            (clamped_x, clamped_y, clamped_w, clamped_h)
+        } else {
+            (100.0, 100.0, width, height)
+        }
+    }
 }

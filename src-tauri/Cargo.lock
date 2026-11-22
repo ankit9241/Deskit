@@ -801,6 +801,7 @@ dependencies = [
  "tauri-plugin-single-instance",
  "thiserror 2.0.21",
  "uuid",
+ "window-vibrancy",
  "windows 0.58.0",
 ]
 

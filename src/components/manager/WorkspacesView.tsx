@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useWorkspaceStore } from '@/stores/workspaceStore';
 import { useWidgetStore } from '@/stores/widgetStore';
 import { WidgetType } from '@/types/widget';
 import {
@@ -17,116 +18,99 @@ interface WorkspacePreset {
   badge: string;
 }
 
-interface CustomWorkspace {
-  id: string;
-  name: string;
-  createdAt: string;
-  widgets: { type: WidgetType; title: string }[];
-}
-
-const STORAGE_KEY = 'deskit_custom_workspaces';
+const PRESET_DEFINITIONS: WorkspacePreset[] = [
+  {
+    id: 'study',
+    name: 'Study & Deep Work',
+    description: 'Focus timer, tasks, clock, and daily habit goals for uninterrupted study sessions.',
+    widgets: ['clock', 'tasks', 'focus', 'goals'],
+    badge: 'Focus Presets',
+  },
+  {
+    id: 'developer',
+    name: 'Developer Workspace',
+    description: 'Milestone deadlines, scratchpad for snippets, task tracker, and clock.',
+    widgets: ['clock', 'tasks', 'notes', 'deadlines'],
+    badge: 'Creator Presets',
+  },
+  {
+    id: 'minimal',
+    name: 'Zen Minimalist',
+    description: 'Zero clutter. Only the clock and a circular focus timer on your desktop.',
+    widgets: ['clock', 'focus'],
+    badge: 'Lightweight',
+  },
+];
 
 export const WorkspacesView: React.FC = () => {
-  const { widgets, pinWidget } = useWidgetStore();
-  const [customWorkspaces, setCustomWorkspaces] = useState<CustomWorkspace[]>([]);
+  const { widgets } = useWidgetStore();
+  const {
+    workspaces,
+    activeWorkspace,
+    fetchWorkspaces,
+    switchWorkspace,
+    saveCurrentWorkspace,
+    deleteWorkspace,
+    initListeners,
+  } = useWorkspaceStore();
+
   const [isSaving, setIsSaving] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [activeApplyingId, setActiveApplyingId] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setCustomWorkspaces(JSON.parse(raw));
-    } catch {
-      // Ignore
-    }
-  }, []);
+    fetchWorkspaces();
+    let cleanup: (() => void) | undefined;
+    initListeners().then((unlisten) => {
+      cleanup = unlisten;
+    });
+    return () => {
+      if (cleanup) cleanup();
+    };
+  }, [fetchWorkspaces, initListeners]);
 
-  const saveCustomWorkspaces = (list: CustomWorkspace[]) => {
-    setCustomWorkspaces(list);
+  const handleApplyPreset = async (presetId: string) => {
+    setActiveApplyingId(presetId);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    } catch {
-      // Ignore
-    }
-  };
-
-  const presets: WorkspacePreset[] = [
-    {
-      id: 'study',
-      name: 'Study & Deep Work',
-      description: 'Focus timer, tasks, clock, and daily habit goals for uninterrupted study sessions.',
-      widgets: ['clock', 'tasks', 'focus', 'goals'],
-      badge: 'Focus Presets',
-    },
-    {
-      id: 'developer',
-      name: 'Developer Workspace',
-      description: 'Milestone deadlines, scratchpad for snippets, task tracker, and clock.',
-      widgets: ['clock', 'tasks', 'notes', 'deadlines'],
-      badge: 'Creator Presets',
-    },
-    {
-      id: 'minimal',
-      name: 'Zen Minimalist',
-      description: 'Zero clutter. Only the clock and a circular focus timer on your desktop.',
-      widgets: ['clock', 'focus'],
-      badge: 'Lightweight',
-    },
-  ];
-
-  const handleApplyPreset = async (preset: WorkspacePreset) => {
-    setActiveApplyingId(preset.id);
-    try {
-      for (const type of preset.widgets) {
-        const title = type.charAt(0).toUpperCase() + type.slice(1);
-        await pinWidget(type, title);
-      }
+      await switchWorkspace(presetId);
     } finally {
       setTimeout(() => setActiveApplyingId(null), 600);
     }
   };
 
-  const handleApplyCustom = async (custom: CustomWorkspace) => {
-    setActiveApplyingId(custom.id);
+  const handleApplyCustom = async (workspaceId: string) => {
+    setActiveApplyingId(workspaceId);
     try {
-      for (const w of custom.widgets) {
-        await pinWidget(w.type, w.title);
-      }
+      await switchWorkspace(workspaceId);
     } finally {
       setTimeout(() => setActiveApplyingId(null), 600);
     }
   };
 
-  const handleSaveCurrent = (e: React.FormEvent) => {
+  const handleSaveCurrent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newWorkspaceName.trim()) return;
 
-    const currentSavedWidgets = widgets.map((w) => ({
-      type: w.widget_type,
-      title: w.title,
-    }));
-
-    if (currentSavedWidgets.length === 0) {
+    if (widgets.length === 0) {
       alert('Please pin at least one widget to desktop before saving a workspace layout.');
       return;
     }
 
-    const created: CustomWorkspace = {
-      id: Date.now().toString(),
-      name: newWorkspaceName.trim(),
-      createdAt: new Date().toLocaleDateString(),
-      widgets: currentSavedWidgets,
-    };
-
-    saveCustomWorkspaces([created, ...customWorkspaces]);
-    setNewWorkspaceName('');
-    setIsSaving(false);
+    try {
+      await saveCurrentWorkspace(newWorkspaceName.trim());
+      setNewWorkspaceName('');
+      setIsSaving(false);
+    } catch (err) {
+      alert(`Failed to save workspace: ${err}`);
+    }
   };
 
-  const handleDeleteCustom = (id: string) => {
-    saveCustomWorkspaces(customWorkspaces.filter((c) => c.id !== id));
+  const handleDeleteCustom = async (id: string) => {
+    await deleteWorkspace(id);
   };
+
+  const builtInIds = new Set(['default', 'study', 'developer', 'minimal']);
+  const customWorkspaces = workspaces.filter((w) => !builtInIds.has(w.id));
 
   return (
     <div className="space-y-6">
@@ -191,13 +175,16 @@ export const WorkspacesView: React.FC = () => {
           Curated Presets
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {presets.map((preset) => {
+          {PRESET_DEFINITIONS.map((preset) => {
             const isApplying = activeApplyingId === preset.id;
+            const isActive = activeWorkspace?.id === preset.id;
 
             return (
               <div
                 key={preset.id}
-                className="p-3.5 rounded-manager manager-card flex flex-col justify-between"
+                className={`p-3.5 rounded-manager manager-card flex flex-col justify-between ${
+                  isActive ? 'border-[#C5B89D]/40 shadow-sm' : ''
+                }`}
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -224,14 +211,21 @@ export const WorkspacesView: React.FC = () => {
                 </div>
 
                 <button
-                  onClick={() => handleApplyPreset(preset)}
+                  onClick={() => handleApplyPreset(preset.id)}
                   disabled={isApplying}
-                  className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-control btn-accent text-xs"
+                  className={`w-full flex items-center justify-center gap-1.5 py-1.5 rounded-control text-xs ${
+                    isActive ? 'btn-quiet text-[#C5B89D]' : 'btn-accent'
+                  }`}
                 >
                   {isApplying ? (
                     <>
                       <CheckIcon size={12} strokeWidth={2.5} />
                       <span>Applying...</span>
+                    </>
+                  ) : isActive ? (
+                    <>
+                      <CheckIcon size={12} />
+                      <span>Current Workspace</span>
                     </>
                   ) : (
                     <>
@@ -255,28 +249,41 @@ export const WorkspacesView: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {customWorkspaces.map((custom) => {
               const isApplying = activeApplyingId === custom.id;
+              const isActive = activeWorkspace?.id === custom.id;
 
               return (
                 <div
                   key={custom.id}
-                  className="flex items-center justify-between p-3 rounded-manager manager-card"
+                  className={`flex items-center justify-between p-3 rounded-manager manager-card ${
+                    isActive ? 'border-[#C5B89D]/40' : ''
+                  }`}
                 >
                   <div className="truncate mr-2">
-                    <h4 className="text-xs font-semibold text-[#F1EFE8] truncate">
-                      {custom.name}
-                    </h4>
+                    <div className="flex items-center gap-1.5">
+                      <h4 className="text-xs font-semibold text-[#F1EFE8] truncate">
+                        {custom.name}
+                      </h4>
+                      {isActive && (
+                        <span className="text-[9px] text-[#C5B89D] px-1 rounded bg-[#C5B89D]/15 font-mono">
+                          Active
+                        </span>
+                      )}
+                    </div>
                     <span className="text-[10px] text-[#858178] font-mono">
-                      {custom.widgets.length} widgets • Saved {custom.createdAt}
+                      {custom.widgets.length} widgets
+                      {custom.created_at ? ` • Saved ${custom.created_at.split('T')[0]}` : ''}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0">
                     <button
-                      onClick={() => handleApplyCustom(custom)}
-                      disabled={isApplying}
-                      className="px-2.5 py-1 rounded-control btn-accent text-xs"
+                      onClick={() => handleApplyCustom(custom.id)}
+                      disabled={isApplying || isActive}
+                      className={`px-2.5 py-1 rounded-control text-xs ${
+                        isActive ? 'btn-quiet text-[#858178]' : 'btn-accent'
+                      }`}
                     >
-                      {isApplying ? 'Applying...' : 'Restore'}
+                      {isApplying ? 'Applying...' : isActive ? 'Active' : 'Restore'}
                     </button>
                     <button
                       onClick={() => handleDeleteCustom(custom.id)}

@@ -48,13 +48,8 @@ export const useGoalStore = create<GoalState>((set, get) => ({
   },
 
   incrementProgress: async (id) => {
-    const goal = get().goals.find((g) => g.id === id);
-    if (!goal) return;
-    const nextCount = goal.current_count + 1;
-    const isCompleted = nextCount >= goal.target_count;
-    const updated = { ...goal, current_count: nextCount, is_completed: isCompleted };
     try {
-      await api.saveGoal(updated);
+      const updated = await api.incrementGoal(id);
       set((state) => ({
         goals: state.goals.map((g) => (g.id === id ? updated : g)),
       }));
@@ -64,13 +59,8 @@ export const useGoalStore = create<GoalState>((set, get) => ({
   },
 
   decrementProgress: async (id) => {
-    const goal = get().goals.find((g) => g.id === id);
-    if (!goal || goal.current_count <= 0) return;
-    const nextCount = goal.current_count - 1;
-    const isCompleted = nextCount >= goal.target_count;
-    const updated = { ...goal, current_count: nextCount, is_completed: isCompleted };
     try {
-      await api.saveGoal(updated);
+      const updated = await api.decrementGoal(id);
       set((state) => ({
         goals: state.goals.map((g) => (g.id === id ? updated : g)),
       }));
@@ -80,16 +70,8 @@ export const useGoalStore = create<GoalState>((set, get) => ({
   },
 
   toggleComplete: async (id) => {
-    const goal = get().goals.find((g) => g.id === id);
-    if (!goal) return;
-    const isCompleted = !goal.is_completed;
-    const updated = {
-      ...goal,
-      is_completed: isCompleted,
-      current_count: isCompleted ? Math.max(goal.current_count, goal.target_count) : 0,
-    };
     try {
-      await api.saveGoal(updated);
+      const updated = await api.toggleGoal(id);
       set((state) => ({
         goals: state.goals.map((g) => (g.id === id ? updated : g)),
       }));
@@ -110,9 +92,22 @@ export const useGoalStore = create<GoalState>((set, get) => ({
   },
 
   initListeners: async () => {
+    let lastDate = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in local timezone
+    const dateInterval = setInterval(() => {
+      const currentDate = new Date().toLocaleDateString('en-CA');
+      if (currentDate !== lastDate) {
+        lastDate = currentDate;
+        get().fetchGoals();
+      }
+    }, 15000);
+
     const unlisten = await onEvent('goals-updated', () => {
       get().fetchGoals();
     });
-    return unlisten;
+
+    return () => {
+      clearInterval(dateInterval);
+      unlisten();
+    };
   },
 }));

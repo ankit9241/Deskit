@@ -8,4 +8,5 @@ export interface FocusSession {
   remaining_seconds: number;
   is_running: boolean;
   updated_at: string;
+  ends_at?: string | null;
 }

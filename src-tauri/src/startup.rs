@@ -28,6 +28,12 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             "quit" => {
+                if let (Some(debouncer), Some(db)) = (
+                    app.try_state::<crate::windows::GeometryDebouncer>(),
+                    app.try_state::<crate::persistence::DbState>(),
+                ) {
+                    debouncer.flush_all(&db);
+                }
                 app.exit(0);
             }
             _ => {}

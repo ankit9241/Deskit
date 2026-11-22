@@ -14,4 +14,4 @@ $env:RC = "$winSdkBin\rc.exe"
 $env:RC_x86_64_pc_windows_msvc = "$winSdkBin\rc.exe"
 
 Set-Location "$PSScriptRoot\..\src-tauri"
-cargo test --test integration_tests
+cargo test --test integration_tests -- $args

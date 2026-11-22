@@ -1,6 +1,6 @@
 use tauri::{AppHandle, Emitter, State};
 
-use crate::models::{VisibilityMode, WidgetInstance, WidgetType};
+use crate::models::{VisibilityMode, WidgetInstance, WidgetType, Workspace};
 use crate::persistence::{DbState, Repositories};
 use crate::windows::WindowManager;
 
@@ -78,5 +78,61 @@ pub fn toggle_collapse_widget(
         .map_err(|e| format!("Failed to collapse widget: {}", e))?;
 
     let _ = app.emit("widget-updated", &widget_id);
+    Ok(())
+}
+
+// ---------------- WORKSPACES ----------------
+
+#[tauri::command]
+pub fn get_workspaces(db: State<'_, DbState>) -> Result<Vec<Workspace>, String> {
+    Repositories::get_all_workspaces(&db.0).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_active_workspace(db: State<'_, DbState>) -> Result<Workspace, String> {
+    Repositories::get_active_workspace(&db.0).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn switch_workspace(
+    app: AppHandle,
+    db: State<'_, DbState>,
+    workspace_id: String,
+) -> Result<Workspace, String> {
+    WindowManager::switch_workspace(&app, &db, &workspace_id)
+        .map_err(|e| format!("Failed to switch workspace: {}", e))
+}
+
+#[tauri::command]
+pub fn save_workspace(
+    app: AppHandle,
+    db: State<'_, DbState>,
+    workspace: Workspace,
+) -> Result<Workspace, String> {
+    let saved = Repositories::save_workspace(&db.0, &workspace).map_err(|e| e.to_string())?;
+    let _ = app.emit("workspace-updated", &saved);
+    Ok(saved)
+}
+
+#[tauri::command]
+pub fn save_current_workspace(
+    app: AppHandle,
+    db: State<'_, DbState>,
+    id: Option<String>,
+    name: String,
+    description: Option<String>,
+) -> Result<Workspace, String> {
+    WindowManager::save_current_workspace(&app, &db, id, name, description)
+        .map_err(|e| format!("Failed to save current workspace: {}", e))
+}
+
+#[tauri::command]
+pub fn delete_workspace(
+    app: AppHandle,
+    db: State<'_, DbState>,
+    workspace_id: String,
+) -> Result<(), String> {
+    Repositories::delete_workspace(&db.0, &workspace_id).map_err(|e| e.to_string())?;
+    let _ = app.emit("workspace-deleted", &workspace_id);
     Ok(())
 }

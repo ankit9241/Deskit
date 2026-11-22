@@ -85,8 +85,8 @@ export const SettingsView: React.FC = () => {
             <div className="space-y-0.5">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-[#F1EFE8]">Launch at Windows Login</span>
-                <span className="text-[9px] px-1.5 py-0.2 rounded bg-white/[0.05] text-[#858178] font-mono">
-                  Default: OFF
+                <span className="text-[9px] px-1.5 py-0.2 rounded bg-white/[0.05] text-[#9DAE9B] font-mono">
+                  Autorestore Pinned Widgets
                 </span>
               </div>
               <p className="text-[11px] text-[#858178]">

@@ -35,3 +35,45 @@ pub fn set_window_size(window: WebviewWindow, width: f64, height: f64) -> Result
         .set_size(tauri::LogicalSize::new(width, height))
         .map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub fn update_window_clip_region(
+    window: WebviewWindow,
+    is_collapsed: bool,
+    radius: Option<u32>,
+) -> Result<(), String> {
+    window
+        .update_window_clip_region(is_collapsed, radius.unwrap_or(28))
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn set_window_position(window: WebviewWindow, x: f64, y: f64) -> Result<(), String> {
+    window
+        .set_position(tauri::Position::Logical(tauri::LogicalPosition::new(x, y)))
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_window_position(window: WebviewWindow) -> Result<(f64, f64), String> {
+    let pos = window.outer_position().map_err(|e| e.to_string())?;
+    Ok((pos.x as f64, pos.y as f64))
+}
+
+#[tauri::command]
+pub fn clear_window_acrylic(window: WebviewWindow) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        crate::windows::factory::WindowFactory::clear_native_effect(&window);
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn apply_window_acrylic(window: WebviewWindow) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        crate::windows::factory::WindowFactory::apply_native_effect(&window);
+    }
+    Ok(())
+}
